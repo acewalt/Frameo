@@ -110,8 +110,8 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
     [safePixelsPerSecond],
   );
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* best-effort */ }
