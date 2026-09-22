@@ -76,16 +76,49 @@ const EFFECT_LIBRARY: ReadonlyArray<{ type: VideoEffectType; en: string; es: str
   { type: "chromatic-aberration", en: "Chromatic Aberration", es: "Aberración cromática", category: "Stylize" },
 ];
 
-const TRANSITION_LIBRARY: ReadonlyArray<{ type: TransitionType; en: string; es: string; descriptionEn: string; descriptionEs: string }> = [
-  { type: "crossfade", en: "Crossfade", es: "Fundido cruzado", descriptionEn: "Blend one clip into the next.", descriptionEs: "Mezcla un clip con el siguiente." },
-  { type: "dipToBlack", en: "Dip to Black", es: "Fundido a negro", descriptionEn: "Fade through black.", descriptionEs: "Transición pasando por negro." },
-  { type: "dipToWhite", en: "Dip to White", es: "Fundido a blanco", descriptionEn: "Fade through white.", descriptionEs: "Transición pasando por blanco." },
-  { type: "wipe", en: "Wipe", es: "Barrido", descriptionEn: "Reveal the next clip directionally.", descriptionEs: "Revela el siguiente clip con un barrido." },
-  { type: "slide", en: "Slide", es: "Deslizar", descriptionEn: "Slide the next clip into frame.", descriptionEs: "Desliza el siguiente clip dentro del cuadro." },
-  { type: "push", en: "Push", es: "Empujar", descriptionEn: "Push both clips together.", descriptionEs: "Empuja ambos clips de forma conjunta." },
-  { type: "zoom", en: "Zoom", es: "Zoom", descriptionEn: "Zoom between adjacent clips.", descriptionEs: "Hace zoom entre clips adyacentes." },
-];
+type TransitionLibraryItem = {
+  id: string;
+  type: TransitionType;
+  en: string;
+  es: string;
+  category: "Basic" | "Motion" | "Blur" | "Creative";
+  duration: number;
+  params: Record<string, unknown>;
+  descriptionEn: string;
+  descriptionEs: string;
+};
 
+const TRANSITION_LIBRARY: ReadonlyArray<TransitionLibraryItem> = [
+  { id:"dissolve", type:"dissolve", en:"Dissolve", es:"Disolución", category:"Basic", duration:.5, params:{curve:"linear"}, descriptionEn:"Linear dissolve between clips.", descriptionEs:"Disolución lineal entre clips." },
+  { id:"crossfade", type:"crossfade", en:"Crossfade", es:"Fundido cruzado", category:"Basic", duration:.5, params:{curve:"ease"}, descriptionEn:"Smooth blend between clips.", descriptionEs:"Mezcla suavemente ambos clips." },
+  { id:"fade-black", type:"dipToBlack", en:"Fade to Black", es:"Fundido a negro", category:"Basic", duration:.5, params:{holdDuration:.08}, descriptionEn:"Fade through black.", descriptionEs:"Transición pasando por negro." },
+  { id:"fade-white", type:"dipToWhite", en:"Fade to White", es:"Fundido a blanco", category:"Basic", duration:.5, params:{holdDuration:.08}, descriptionEn:"Fade through white.", descriptionEs:"Transición pasando por blanco." },
+
+  { id:"wipe-left", type:"wipe", en:"Wipe Left", es:"Barrido izquierda", category:"Motion", duration:.6, params:{direction:"left",softness:0}, descriptionEn:"Directional wipe to the left.", descriptionEs:"Barrido direccional hacia la izquierda." },
+  { id:"wipe-right", type:"wipe", en:"Wipe Right", es:"Barrido derecha", category:"Motion", duration:.6, params:{direction:"right",softness:0}, descriptionEn:"Directional wipe to the right.", descriptionEs:"Barrido direccional hacia la derecha." },
+  { id:"wipe-up", type:"wipe", en:"Wipe Up", es:"Barrido arriba", category:"Motion", duration:.6, params:{direction:"up",softness:0}, descriptionEn:"Directional wipe upward.", descriptionEs:"Barrido direccional hacia arriba." },
+  { id:"wipe-down", type:"wipe", en:"Wipe Down", es:"Barrido abajo", category:"Motion", duration:.6, params:{direction:"down",softness:0}, descriptionEn:"Directional wipe downward.", descriptionEs:"Barrido direccional hacia abajo." },
+  { id:"wipe-soft", type:"wipe", en:"Soft Wipe", es:"Barrido suave", category:"Motion", duration:.8, params:{direction:"right",softness:.5}, descriptionEn:"Wipe with a softened edge.", descriptionEs:"Barrido con borde suavizado." },
+
+  { id:"slide-left", type:"slide", en:"Slide Left", es:"Deslizar izquierda", category:"Motion", duration:.5, params:{direction:"left",pushOut:false}, descriptionEn:"Slide the next clip in from the right.", descriptionEs:"Desliza el siguiente clip desde la derecha." },
+  { id:"slide-right", type:"slide", en:"Slide Right", es:"Deslizar derecha", category:"Motion", duration:.5, params:{direction:"right",pushOut:false}, descriptionEn:"Slide the next clip in from the left.", descriptionEs:"Desliza el siguiente clip desde la izquierda." },
+  { id:"slide-up", type:"slide", en:"Slide Up", es:"Deslizar arriba", category:"Motion", duration:.5, params:{direction:"up",pushOut:false}, descriptionEn:"Slide the next clip upward.", descriptionEs:"Desliza el siguiente clip hacia arriba." },
+  { id:"slide-down", type:"slide", en:"Slide Down", es:"Deslizar abajo", category:"Motion", duration:.5, params:{direction:"down",pushOut:false}, descriptionEn:"Slide the next clip downward.", descriptionEs:"Desliza el siguiente clip hacia abajo." },
+
+  { id:"push-left", type:"push", en:"Push Left", es:"Empujar izquierda", category:"Motion", duration:.5, params:{direction:"left"}, descriptionEn:"Push both clips to the left.", descriptionEs:"Empuja ambos clips hacia la izquierda." },
+  { id:"push-right", type:"push", en:"Push Right", es:"Empujar derecha", category:"Motion", duration:.5, params:{direction:"right"}, descriptionEn:"Push both clips to the right.", descriptionEs:"Empuja ambos clips hacia la derecha." },
+
+  { id:"zoom-in", type:"zoom", en:"Zoom In", es:"Zoom de entrada", category:"Motion", duration:.6, params:{scale:2,center:{x:.5,y:.5}}, descriptionEn:"Zoom through the cut.", descriptionEs:"Zoom progresivo durante el corte." },
+  { id:"zoom-out", type:"zoom", en:"Zoom Out", es:"Zoom de salida", category:"Motion", duration:.6, params:{scale:.5,center:{x:.5,y:.5}}, descriptionEn:"Reverse zoom through the cut.", descriptionEs:"Zoom inverso durante el corte." },
+
+  { id:"iris-circle", type:"iris", en:"Iris Circle", es:"Iris circular", category:"Creative", duration:.7, params:{shape:"circle",invert:false}, descriptionEn:"Reveal through a circular iris.", descriptionEs:"Revela el siguiente clip con un iris circular." },
+  { id:"iris-star", type:"iris", en:"Iris Star", es:"Iris estrella", category:"Creative", duration:.7, params:{shape:"star",invert:false}, descriptionEn:"Reveal through a star-shaped iris.", descriptionEs:"Revela el clip mediante una estrella." },
+  { id:"iris-diamond", type:"iris", en:"Iris Diamond", es:"Iris rombo", category:"Creative", duration:.7, params:{shape:"diamond",invert:false}, descriptionEn:"Reveal through a diamond iris.", descriptionEs:"Revela el clip mediante un rombo." },
+  { id:"iris-rectangle", type:"iris", en:"Iris Rectangle", es:"Iris rectangular", category:"Creative", duration:.7, params:{shape:"rectangle",invert:false}, descriptionEn:"Reveal through a rectangular iris.", descriptionEs:"Revela el clip mediante un rectángulo." },
+
+  { id:"blur-soft", type:"blur", en:"Blur Dissolve", es:"Disolución desenfocada", category:"Blur", duration:.6, params:{amount:20}, descriptionEn:"Blend with a soft blur peak.", descriptionEs:"Mezcla ambos clips con desenfoque suave." },
+  { id:"blur-heavy", type:"blur", en:"Heavy Blur", es:"Desenfoque fuerte", category:"Blur", duration:.8, params:{amount:50}, descriptionEn:"Blend with a stronger blur peak.", descriptionEs:"Mezcla ambos clips con desenfoque fuerte." },
+];
 
 
 
@@ -802,7 +835,7 @@ export const AssetsPanel: React.FC = () => {
     return null;
   }, [getSelectedTimelineClipId, project.timeline.tracks]);
 
-  const applyTransitionFromLibrary = useCallback((type: TransitionType) => {
+  const applyTransitionFromLibrary = useCallback((preset: TransitionLibraryItem) => {
     const pair = findTransitionPair();
     if (!pair) {
       toast.warning(
@@ -813,7 +846,13 @@ export const AssetsPanel: React.FC = () => {
     }
     const bridge = getTransitionBridge();
     if (!bridge.isInitialized()) bridge.initialize();
-    const result = bridge.createTransition(pair.clipA, pair.clipB, type, 0.6, bridge.getDefaultParams(type));
+    const result = bridge.createTransition(
+      pair.clipA,
+      pair.clipB,
+      preset.type,
+      preset.duration,
+      { ...bridge.getDefaultParams(preset.type), ...preset.params },
+    );
     if (!result.success || !result.transitionId) {
       toast.error(language === "es" ? "No se pudo crear la transición" : "Transition failed", result.error || "");
       return;
@@ -1346,13 +1385,15 @@ export const AssetsPanel: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {TRANSITION_LIBRARY.map((transition) => (
                     <button
-                      key={transition.type}
+                      key={transition.id}
                       draggable
                       onDragStart={(event) => {
                         event.dataTransfer.effectAllowed = "copy";
                         event.dataTransfer.setData("application/x-frameo-transition", transition.type);
+                        event.dataTransfer.setData("application/x-frameo-transition-params", JSON.stringify(transition.params));
+                        event.dataTransfer.setData("application/x-frameo-transition-duration", String(transition.duration));
                       }}
-                      onClick={() => applyTransitionFromLibrary(transition.type)}
+                      onClick={() => applyTransitionFromLibrary(transition)}
                       className="group rounded-lg border border-border bg-background-tertiary p-2 text-left transition-all hover:border-primary/60 hover:bg-primary/5"
                     >
                       <div className="relative mb-2 h-12 overflow-hidden rounded bg-background">
@@ -1360,9 +1401,14 @@ export const AssetsPanel: React.FC = () => {
                         <div className="absolute inset-y-0 right-0 w-1/2 bg-white/10 transition-transform duration-300 group-hover:translate-x-2" />
                         <ArrowRight size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" />
                       </div>
-                      <p className="text-[10px] font-semibold text-text-primary">
-                        {language === "es" ? transition.es : transition.en}
-                      </p>
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-[10px] font-semibold text-text-primary">
+                          {language === "es" ? transition.es : transition.en}
+                        </p>
+                        <span className="rounded bg-background-elevated px-1 py-0.5 text-[7px] uppercase tracking-wide text-text-muted">
+                          {transition.category}
+                        </span>
+                      </div>
                       <p className="mt-0.5 line-clamp-2 text-[9px] text-text-muted">
                         {language === "es" ? transition.descriptionEs : transition.descriptionEn}
                       </p>
