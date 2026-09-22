@@ -379,11 +379,13 @@ export const Preview: React.FC = () => {
   const renderBridgeInitialized = useRef<boolean>(false);
   const lastGoodFrameRef = useRef<ImageBitmap | null>(null);
   const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
-  const decodeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const decodeDebounceResolveRef = useRef<((value: ImageBitmap | null) => void) | null>(
-    null,
-  );
-  const decodeRequestSeqRef = useRef(0);
+  const decodeDebounceTimersRef = useRef<
+    Map<string, ReturnType<typeof setTimeout>>
+  >(new Map());
+  const decodeDebounceResolversRef = useRef<
+    Map<string, (value: ImageBitmap | null) => void>
+  >(new Map());
+  const decodeRequestSeqRef = useRef<Map<string, number>>(new Map());
   const scrubVideoReleaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -631,13 +633,19 @@ export const Preview: React.FC = () => {
   }, [releaseVideoElement]);
 
   const cancelPendingScrubDecode = useCallback((): void => {
-    if (decodeDebounceRef.current) {
-      clearTimeout(decodeDebounceRef.current);
-      decodeDebounceRef.current = null;
+    for (const timer of decodeDebounceTimersRef.current.values()) {
+      clearTimeout(timer);
     }
-    decodeDebounceResolveRef.current?.(null);
-    decodeDebounceResolveRef.current = null;
-    decodeRequestSeqRef.current += 1;
+    decodeDebounceTimersRef.current.clear();
+
+    for (const resolve of decodeDebounceResolversRef.current.values()) {
+      resolve(null);
+    }
+    decodeDebounceResolversRef.current.clear();
+
+    for (const [clipId, seq] of decodeRequestSeqRef.current.entries()) {
+      decodeRequestSeqRef.current.set(clipId, seq + 1);
+    }
   }, []);
 
   const releaseScrubVideoElements = useCallback((): void => {
@@ -1514,26 +1522,31 @@ export const Preview: React.FC = () => {
         }
       }
 
-      const requestSeq = ++decodeRequestSeqRef.current;
-      const isStaleRequest = () => requestSeq !== decodeRequestSeqRef.current;
+      const decodeKey = clip.id;
+      const requestSeq = (decodeRequestSeqRef.current.get(decodeKey) ?? 0) + 1;
+      decodeRequestSeqRef.current.set(decodeKey, requestSeq);
+      const isStaleRequest = () =>
+        requestSeq !== decodeRequestSeqRef.current.get(decodeKey);
 
       if (scrubVideoReleaseTimerRef.current) {
         clearTimeout(scrubVideoReleaseTimerRef.current);
         scrubVideoReleaseTimerRef.current = null;
       }
 
-      if (decodeDebounceRef.current) {
-        clearTimeout(decodeDebounceRef.current);
-        decodeDebounceRef.current = null;
+      const previousTimer = decodeDebounceTimersRef.current.get(decodeKey);
+      if (previousTimer) {
+        clearTimeout(previousTimer);
+        decodeDebounceTimersRef.current.delete(decodeKey);
       }
-      decodeDebounceResolveRef.current?.(null);
-      decodeDebounceResolveRef.current = null;
+      const previousResolve = decodeDebounceResolversRef.current.get(decodeKey);
+      previousResolve?.(null);
+      decodeDebounceResolversRef.current.delete(decodeKey);
 
       return new Promise<ImageBitmap | null>((resolve) => {
-        decodeDebounceResolveRef.current = resolve;
-        decodeDebounceRef.current = setTimeout(async () => {
-          decodeDebounceRef.current = null;
-          decodeDebounceResolveRef.current = null;
+        decodeDebounceResolversRef.current.set(decodeKey, resolve);
+        const timer = setTimeout(async () => {
+          decodeDebounceTimersRef.current.delete(decodeKey);
+          decodeDebounceResolversRef.current.delete(decodeKey);
 
           if (isStaleRequest()) {
             resolve(null);
@@ -1730,6 +1743,7 @@ export const Preview: React.FC = () => {
             resolve(null);
           }
         }, isInteractingRef.current ? 0 : 50);
+        decodeDebounceTimersRef.current.set(decodeKey, timer);
       });
     },
     [
