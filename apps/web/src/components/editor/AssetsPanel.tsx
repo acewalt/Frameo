@@ -463,14 +463,6 @@ export const AssetsPanel: React.FC = () => {
     if (language !== "es") return category;
     return ({ All: "Todo", Basic: "Básico", Color: "Color", Blur: "Desenfoque", Creative: "Creativo", Stylize: "Estilizar", Motion: "Movimiento" } as Record<string,string>)[category] ?? category;
   };
-  const filteredEffects = EFFECT_LIBRARY.filter((effect) =>
-    (effectCategory === "All" || effect.category === effectCategory) &&
-    (language === "es" ? effect.es : effect.en).toLowerCase().includes(effectSearch.trim().toLowerCase())
-  );
-  const filteredTransitions = TRANSITION_LIBRARY.filter((transition) =>
-    (transitionCategory === "All" || transition.category === transitionCategory) &&
-    (language === "es" ? transition.es : transition.en).toLowerCase().includes(transitionSearch.trim().toLowerCase())
-  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTabRaw] = useState<AssetsTab>("media");
@@ -482,6 +474,15 @@ export const AssetsPanel: React.FC = () => {
   const [effectCategory, setEffectCategory] = useState<"All" | string>("All");
   const [transitionSearch, setTransitionSearch] = useState("");
   const [transitionCategory, setTransitionCategory] = useState<"All" | TransitionLibraryItem["category"]>("All");
+
+  const filteredEffects = EFFECT_LIBRARY.filter((effect) =>
+    (effectCategory === "All" || effect.category === effectCategory) &&
+    (language === "es" ? effect.es : effect.en).toLowerCase().includes(effectSearch.trim().toLowerCase())
+  );
+  const filteredTransitions = TRANSITION_LIBRARY.filter((transition) =>
+    (transitionCategory === "All" || transition.category === transitionCategory) &&
+    (language === "es" ? transition.es : transition.en).toLowerCase().includes(transitionSearch.trim().toLowerCase())
+  );
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
