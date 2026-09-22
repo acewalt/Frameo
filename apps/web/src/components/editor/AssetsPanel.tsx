@@ -464,12 +464,32 @@ export const AssetsPanel: React.FC = () => {
   ];
   const tabLabel = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.label ?? tab;
   const tabDescription = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.description ?? tab;
+
+  const effectCategories = ["All", ...Array.from(new Set(EFFECT_LIBRARY.map((item) => item.category)))] as const;
+  const transitionCategories = ["All", ...Array.from(new Set(TRANSITION_LIBRARY.map((item) => item.category)))] as const;
+  const categoryLabel = (category: string) => {
+    if (language !== "es") return category;
+    return ({ All: "Todo", Basic: "Básico", Color: "Color", Blur: "Desenfoque", Creative: "Creativo", Stylize: "Estilizar", Motion: "Movimiento" } as Record<string,string>)[category] ?? category;
+  };
+  const filteredEffects = EFFECT_LIBRARY.filter((effect) =>
+    (effectCategory === "All" || effect.category === effectCategory) &&
+    (language === "es" ? effect.es : effect.en).toLowerCase().includes(effectSearch.trim().toLowerCase())
+  );
+  const filteredTransitions = TRANSITION_LIBRARY.filter((transition) =>
+    (transitionCategory === "All" || transition.category === transitionCategory) &&
+    (language === "es" ? transition.es : transition.en).toLowerCase().includes(transitionSearch.trim().toLowerCase())
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTabRaw] = useState<AssetsTab>("media");
   const setActiveTab = useCallback((tab: AssetsTab) => {
     setActiveTabRaw(tab);
   }, []);
+
+  const [effectSearch, setEffectSearch] = useState("");
+  const [effectCategory, setEffectCategory] = useState<"All" | string>("All");
+  const [transitionSearch, setTransitionSearch] = useState("");
+  const [transitionCategory, setTransitionCategory] = useState<"All" | TransitionLibraryItem["category"]>("All");
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -1240,7 +1260,7 @@ export const AssetsPanel: React.FC = () => {
                   className="w-full py-4 bg-background-tertiary rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
                 >
                   <span className="text-lg font-bold text-text-primary">
-                    Add Title
+                    {language === "es" ? "Añadir título" : "Add Title"}
                   </span>
                   <p className="text-xs text-text-muted mt-1">
                     {language === "es" ? "Haz clic para añadir texto a la línea de tiempo" : "Click to add text to timeline"}
@@ -1333,8 +1353,32 @@ export const AssetsPanel: React.FC = () => {
           <div className="min-h-0 flex-1 border-t border-border/70">
             <ScrollArea className="min-h-0 flex-1">
               <div className="px-4 py-4">
+                <div className="relative mb-3">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <input
+                    value={effectSearch}
+                    onChange={(e) => setEffectSearch(e.target.value)}
+                    placeholder={language === "es" ? "Buscar efectos..." : "Search effects..."}
+                    className="h-8 w-full rounded-md border border-border bg-background-tertiary pl-8 pr-2 text-[11px] text-text-primary outline-none focus:border-primary/60"
+                  />
+                </div>
+                <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
+                  {effectCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setEffectCategory(category)}
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] transition-colors ${
+                        effectCategory === category
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-background-tertiary text-text-muted hover:text-text-primary"
+                      }`}
+                    >
+                      {categoryLabel(category)}
+                    </button>
+                  ))}
+                </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {EFFECT_LIBRARY.map((effect) => (
+                  {filteredEffects.map((effect) => (
                     <button
                       key={effect.type}
                       onClick={() => applyEffectFromLibrary(effect.type)}
@@ -1345,7 +1389,7 @@ export const AssetsPanel: React.FC = () => {
                           <Wand2 size={24} className="text-text-muted transition-colors group-hover:text-primary" />
                         </div>
                         <span className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-0.5 text-[8px] uppercase text-white/80">
-                          {effect.category}
+                          {categoryLabel(effect.category)}
                         </span>
                       </div>
                       <div className="px-2 py-2">
@@ -1356,6 +1400,11 @@ export const AssetsPanel: React.FC = () => {
                     </button>
                   ))}
                 </div>
+                {filteredEffects.length === 0 && (
+                  <p className="py-8 text-center text-[10px] text-text-muted">
+                    {language === "es" ? "No se encontraron efectos." : "No effects found."}
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -1377,13 +1426,37 @@ export const AssetsPanel: React.FC = () => {
           <div className="min-h-0 flex-1 border-t border-border/70">
             <ScrollArea className="min-h-0 flex-1">
               <div className="px-4 py-4">
+                <div className="relative mb-3">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <input
+                    value={transitionSearch}
+                    onChange={(e) => setTransitionSearch(e.target.value)}
+                    placeholder={language === "es" ? "Buscar transiciones..." : "Search transitions..."}
+                    className="h-8 w-full rounded-md border border-border bg-background-tertiary pl-8 pr-2 text-[11px] text-text-primary outline-none focus:border-primary/60"
+                  />
+                </div>
+                <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+                  {transitionCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setTransitionCategory(category)}
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] transition-colors ${
+                        transitionCategory === category
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-background-tertiary text-text-muted hover:text-text-primary"
+                      }`}
+                    >
+                      {categoryLabel(category)}
+                    </button>
+                  ))}
+                </div>
                 <p className="mb-3 text-[10px] text-text-muted">
                   {language === "es"
-                    ? "Haz clic para aplicarla al clip seleccionado o arrástrala hasta un corte en la línea de tiempo."
-                    : "Click to apply to the selected clip, or drag it onto a cut in the timeline."}
+                    ? "Haz clic para aplicarla o arrástrala directamente sobre un corte de la línea de tiempo."
+                    : "Click to apply, or drag it directly onto a timeline cut."}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {TRANSITION_LIBRARY.map((transition) => (
+                  {filteredTransitions.map((transition) => (
                     <button
                       key={transition.id}
                       draggable
@@ -1406,7 +1479,7 @@ export const AssetsPanel: React.FC = () => {
                           {language === "es" ? transition.es : transition.en}
                         </p>
                         <span className="rounded bg-background-elevated px-1 py-0.5 text-[7px] uppercase tracking-wide text-text-muted">
-                          {transition.category}
+                          {categoryLabel(transition.category)}
                         </span>
                       </div>
                       <p className="mt-0.5 line-clamp-2 text-[9px] text-text-muted">
@@ -1415,6 +1488,11 @@ export const AssetsPanel: React.FC = () => {
                     </button>
                   ))}
                 </div>
+                {filteredTransitions.length === 0 && (
+                  <p className="py-8 text-center text-[10px] text-text-muted">
+                    {language === "es" ? "No se encontraron transiciones." : "No transitions found."}
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </div>
