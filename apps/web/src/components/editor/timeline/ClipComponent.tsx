@@ -225,8 +225,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       mousePositionRef.current.y = e.clientY;
 
       const rect = clipRef.current?.parentElement?.getBoundingClientRect();
-      const timelineRect = timelineRef.current?.getBoundingClientRect();
-      if (!rect || !timelineRect) return;
+      if (!rect) return;
 
       const x = e.clientX - rect.left - dragOffset;
       const rawTime = Math.max(0, x / pixelsPerSecond);
@@ -246,25 +245,20 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       const yDelta = (e.clientY - dragStartRef.current.mouseY) + scrollDelta;
       setDragYOffset(yDelta);
 
-      const scrollTop = timelineRef.current?.scrollTop || 0;
-      const mouseY = e.clientY - timelineRect.top + scrollTop;
-      let targetTrackId: string | undefined;
-      let hoveredTrackType: string | undefined;
-      let cumulativeY = 0;
+      const hitElement = document.elementFromPoint(e.clientX, e.clientY);
+      const hitLane = hitElement?.closest<HTMLElement>("[data-timeline-track-id]");
+      const hoveredTrackType = hitLane?.dataset.timelineTrackType;
+      const hoveredTrackId = hitLane?.dataset.timelineTrackId;
 
-      for (const t of allTracks) {
-        const height = trackHeights.get(t.id) || 60;
-        if (mouseY >= cumulativeY && mouseY < cumulativeY + height) {
-          hoveredTrackType = t.type;
-          if (t.type === track.type && t.id !== track.id) {
-            targetTrackId = t.id;
-          }
-          break;
-        }
-        cumulativeY += height;
-      }
+      const targetTrackId =
+        hoveredTrackType === track.type &&
+        hoveredTrackId &&
+        hoveredTrackId !== track.id
+          ? hoveredTrackId
+          : undefined;
 
-      const isOverDifferentTrackType = hoveredTrackType !== undefined && hoveredTrackType !== track.type;
+      const isOverDifferentTrackType =
+        hoveredTrackType !== undefined && hoveredTrackType !== track.type;
       setIsInvalidDrop(isOverDifferentTrackType);
 
       pendingDropRef.current = {
