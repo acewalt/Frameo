@@ -215,22 +215,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
     };
 
     return (
-      <div className="fixed inset-0 z-50 bg-background overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,197,94,0.07),transparent_58%)]" />
-        <div className="absolute top-5 right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary p-1">
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto overscroll-y-contain">
+        <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(34,197,94,0.07),transparent_58%)]" />
+        <div className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-4 sm:right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary/95 backdrop-blur p-1 shadow-sm">
           <Languages size={14} className="mx-2 text-text-muted" />
           <button onClick={() => setLanguage("es")} className={`px-2 py-1 rounded text-xs ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
           <button onClick={() => setLanguage("en")} className={`px-2 py-1 rounded text-xs ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
         </div>
 
-        <div className="relative h-full flex items-center justify-center px-6">
-          <div className="w-full max-w-2xl rounded-3xl border border-border bg-background-secondary/95 p-8 shadow-2xl shadow-black/20">
-            <div className="flex items-center justify-center gap-3 mb-8">
+        <div className="relative min-h-full flex items-center justify-center px-4 sm:px-6 py-[max(5rem,calc(env(safe-area-inset-top)+4rem))] sm:py-10">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-background-secondary/95 p-5 sm:p-8 shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-center gap-3 mb-5 sm:mb-8">
               <div className="w-10 h-10 text-primary"><FrameoLogo className="w-full h-full" /></div>
               <span className="text-lg font-semibold text-text-primary">Frameo</span>
             </div>
 
-            <div className="text-center mb-7">
+            <div className="text-center mb-5 sm:mb-7">
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary mb-3">{t("ideaTitle")}</h1>
               <p className="text-sm sm:text-base text-text-muted max-w-xl mx-auto">{t("ideaSubtitle")}</p>
             </div>
@@ -243,7 +243,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === "Enter") continueToFormats();
               }}
               placeholder={t("ideaPlaceholder")}
-              className="w-full min-h-32 resize-none rounded-2xl border border-border bg-background p-4 text-base text-text-primary placeholder:text-text-muted/60 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full min-h-28 sm:min-h-32 resize-none rounded-2xl border border-border bg-background p-4 text-base text-text-primary placeholder:text-text-muted/60 focus:border-primary focus:ring-1 focus:ring-primary"
             />
 
             <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -258,7 +258,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               ))}
             </div>
 
-            <div className="mt-8 flex items-center justify-between gap-3">
+            <div className="mt-6 sm:mt-8 flex items-center justify-between gap-3">
               <button
                 onClick={() => { setProjectIdea(""); sessionStorage.removeItem("frameo-project-idea"); setViewMode("home"); }}
                 className="px-4 py-2 text-sm text-text-muted hover:text-text-primary"
@@ -279,7 +279,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   if (viewMode === "templates") {
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <header className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-border pt-[max(0.75rem,env(safe-area-inset-top))]">
           <Button
             variant="ghost"
             size="sm"
@@ -291,7 +291,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
           <h2 className="text-sm font-medium text-text-primary">{t("templates")}</h2>
           <div className="w-16" />
         </header>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <TemplateGallery onTemplateApplied={handleTemplateApplied} />
         </div>
       </div>
@@ -301,7 +301,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   if (viewMode === "recent") {
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <header className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-border pt-[max(0.75rem,env(safe-area-inset-top))]">
           <Button
             variant="ghost"
             size="sm"
@@ -315,7 +315,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
           </h2>
           <div className="w-16" />
         </header>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <RecentProjects onProjectSelected={handleProjectSelected} />
         </div>
       </div>
@@ -323,40 +323,40 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,197,94,0.05),transparent_60%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(34,197,94,0.03),transparent_50%)]" />
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto overscroll-y-contain">
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(34,197,94,0.05),transparent_60%)]" />
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_bottom_right,rgba(34,197,94,0.03),transparent_50%)]" />
 
-      <div className="relative h-full flex flex-col items-center justify-center px-6">
-        <div className="absolute top-5 right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary p-1">
+      <div className="relative min-h-full flex flex-col items-center px-4 sm:px-6 pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:py-10 sm:justify-center">
+        <div className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-4 sm:right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary/95 backdrop-blur p-1 shadow-sm">
           <Languages size={14} className="mx-2 text-text-muted" />
           <button onClick={() => setLanguage("es")} className={`px-2 py-1 rounded text-xs ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
           <button onClick={() => setLanguage("en")} className={`px-2 py-1 rounded text-xs ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
         </div>
         <div className="w-full max-w-3xl">
-          <div className="flex flex-col items-center text-center mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 text-primary">
+          <div className="flex flex-col items-center text-center mb-7 sm:mb-12">
+            <div className="flex items-center gap-2.5 mb-4 sm:gap-3 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 text-primary">
                 <FrameoLogo className="w-full h-full" />
               </div>
-              <span className="text-xl font-semibold text-text-primary tracking-tight">
+              <span className="text-lg sm:text-xl font-semibold text-text-primary tracking-tight">
                 Frameo
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-3">
+            <h1 className="text-[2.15rem] leading-[1.04] sm:text-5xl font-bold text-text-primary tracking-tight mb-2 sm:mb-3 max-w-[22rem] sm:max-w-none">
               {t("tagline")}
             </h1>
-            <p className="text-xl text-text-secondary mb-8">
+            <p className="text-lg sm:text-xl text-text-secondary mb-6 sm:mb-8">
               {t("inBrowser")}
             </p>
-            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2">{t("chooseFormat")}</p>
-            <p className="text-base text-text-muted max-w-md">
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em] text-primary mb-2">{t("chooseFormat")}</p>
+            <p className="text-sm sm:text-base text-text-muted max-w-md px-2 sm:px-0">
               {t("pickFormat")}
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-10">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-px-4 -mx-4 px-4 pb-3 mb-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:snap-none sm:mx-0 sm:px-0 sm:pb-0 sm:mb-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {FORMAT_OPTIONS.map((option) => {
               const Icon = option.icon;
               const isHovered = hoveredFormat === option.id;
@@ -368,7 +368,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                   onMouseEnter={() => setHoveredFormat(option.id)}
                   onMouseLeave={() => setHoveredFormat(null)}
                   className={`
-                    group relative flex flex-col items-center p-6 rounded-2xl
+                    group relative flex flex-col items-center shrink-0 snap-center w-[76vw] max-w-[18rem] min-h-[17.5rem] p-5 sm:w-auto sm:max-w-none sm:min-h-0 sm:p-6 rounded-2xl
                     bg-background-secondary border border-border
                     hover:border-primary/40 hover:bg-background-tertiary
                     transition-all duration-200
@@ -385,7 +385,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                   <div className="relative z-10 flex flex-col items-center">
                     <div
                       className={`
-                      w-16 h-16 mb-4 rounded-xl flex items-center justify-center
+                      w-14 h-14 sm:w-16 sm:h-16 mb-4 rounded-xl flex items-center justify-center
                       bg-background-tertiary group-hover:bg-primary/10
                       transition-colors duration-200
                     `}
@@ -396,10 +396,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                       />
                     </div>
 
-                    <h3 className="text-lg font-semibold text-text-primary mb-1">
+                    <h3 className="text-xl sm:text-lg font-semibold text-text-primary mb-1">
                       {option.id === "vertical" ? t("vertical") : option.id === "square" ? t("square") : t("horizontal")}
                     </h3>
-                    <p className="text-sm text-text-muted mb-3">
+                    <p className="text-sm text-text-muted mb-3 text-center">
                       {option.description}
                     </p>
                     <span className="text-xs font-mono text-text-muted/70 bg-background-tertiary px-2 py-1 rounded">
@@ -410,7 +410,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                   <div
                     className={`
                     absolute bottom-4 left-1/2 -translate-x-1/2
-                    flex items-center gap-1 text-sm font-medium text-primary
+                    hidden sm:flex items-center gap-1 text-sm font-medium text-primary
                     opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0
                     transition-all duration-200
                   `}
@@ -423,11 +423,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 w-full">
             <Button
               variant="outline"
               onClick={() => setViewMode("templates")}
-              className="rounded-xl"
+              className="rounded-xl w-full sm:w-auto justify-center"
             >
               <Layers size={16} />
               {t("browseTemplates")}
@@ -435,7 +435,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             <Button
               variant="outline"
               onClick={() => setViewMode("recent")}
-              className="rounded-xl"
+              className="rounded-xl w-full sm:w-auto justify-center"
             >
               <Clock size={16} />
               {t("recentProjects")}
@@ -443,7 +443,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             <Button
               variant="outline"
               onClick={() => navigate("editor")}
-              className="rounded-xl"
+              className="rounded-xl w-full sm:w-auto justify-center"
             >
               <FolderOpen size={16} />
               {t("openEditor")}
@@ -451,7 +451,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
           </div>
         </div>
 
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+        <div className="mt-7 sm:mt-0 sm:absolute sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 pb-2 sm:pb-0">
           <div className="flex items-center gap-2">
             <Switch
               id="skip-welcome"
@@ -466,9 +466,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             </Label>
           </div>
 
-          <span className="text-text-muted/30">·</span>
+          <span className="hidden sm:inline text-text-muted/30">·</span>
 
-          <p className="text-xs text-text-muted/60">
+          <p className="hidden sm:block text-xs text-text-muted/60">
             {language === "es" ? "Pulsa" : "Press"}{" "}
             <kbd className="px-1.5 py-0.5 bg-background-tertiary border border-border rounded text-text-muted font-mono text-[10px]">
               Esc
