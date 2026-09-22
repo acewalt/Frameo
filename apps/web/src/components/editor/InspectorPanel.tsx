@@ -1018,7 +1018,7 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {clipType === "video" && (
-              <Section title="AI Auto-Captions" sectionId="auto-captions" defaultOpen={false}>
+              <Section title={language === "es" ? "Subtítulos automáticos" : "Auto Captions"} sectionId="auto-captions" defaultOpen={false}>
                 <div className="space-y-3">
                   <div>
                     <label className="text-[10px] text-text-secondary block mb-1">
@@ -1118,33 +1118,33 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {clipType === "video" && (
-              <Section title="Background Removal" sectionId="background-removal" defaultOpen={false}>
+              <Section title={language === "es" ? "Quitar fondo" : "Background Removal"} sectionId="background-removal" defaultOpen={false}>
                 <BackgroundRemovalSection clipId={clipId} />
               </Section>
             )}
 
             {clipType === "video" && (
-              <Section title="Auto Reframe" sectionId="auto-reframe" defaultOpen={false}>
+              <Section title={language === "es" ? "Reencuadre automático" : "Auto Reframe"} sectionId="auto-reframe" defaultOpen={false}>
                 <AutoReframeSection clipId={clipId} />
               </Section>
             )}
 
             {showAudioEffects && (
-              <Section title="Auto Cut Silence" sectionId="auto-cut-silence" defaultOpen={false}>
+              <Section title={language === "es" ? "Cortar silencios" : "Auto Cut Silence"} sectionId="auto-cut-silence" defaultOpen={false}>
                 <AutoCutSilenceSection clipId={clipId} />
               </Section>
             )}
 
             {/* Beat Sync - Sync other clips to this audio's beats */}
             {clipType === "audio" && (
-              <Section title="Beat Sync" sectionId="beat-sync" defaultOpen={false}>
+              <Section title={language === "es" ? "Sincronizar al ritmo" : "Beat Sync"} sectionId="beat-sync" defaultOpen={false}>
                 <AudioTextSyncPanel clipId={clipId} />
               </Section>
             )}
 
             {/* Auto-Edit - Cut video clips to audio beats */}
             {showAudioEffects && (
-              <Section title="Beat-Synced Auto-Edit" sectionId="auto-edit" defaultOpen={false}>
+              <Section title={language === "es" ? "Autoedición al ritmo" : "Beat-Synced Auto-Edit"} sectionId="auto-edit" defaultOpen={false}>
                 <AutoEditPanel onClose={() => {}} />
               </Section>
             )}
@@ -1277,7 +1277,7 @@ export const InspectorPanel: React.FC = () => {
               !selectedClip.mediaId.startsWith("shape-") &&
               !selectedClip.mediaId.startsWith("svg-") &&
               !selectedClip.mediaId.startsWith("sticker-") && (
-                <Section title="Crop" sectionId="crop" defaultOpen={false}>
+                <Section title={language === "es" ? "Recorte" : "Crop"} sectionId="crop" defaultOpen={false}>
                   <CropSection clip={selectedClip as Clip} />
                 </Section>
               )}
@@ -1290,7 +1290,7 @@ export const InspectorPanel: React.FC = () => {
               !selectedClip.mediaId.startsWith("svg-") &&
               !selectedClip.mediaId.startsWith("sticker-") && (
                 <Section
-                  title="Speed & Direction"
+                  title={language === "es" ? "Velocidad y dirección" : "Speed & Direction"}
                   sectionId="speed"
                   defaultOpen={true}
                 >
@@ -1306,7 +1306,7 @@ export const InspectorPanel: React.FC = () => {
               !selectedClip.mediaId.startsWith("svg-") &&
               !selectedClip.mediaId.startsWith("sticker-") && (
                 <Section
-                  title="Stabilization"
+                  title={language === "es" ? "Estabilización" : "Stabilization"}
                   sectionId="stabilization"
                   defaultOpen={false}
                 >
@@ -1322,7 +1322,7 @@ export const InspectorPanel: React.FC = () => {
               !selectedClip.mediaId.startsWith("svg-") &&
               !selectedClip.mediaId.startsWith("sticker-") && (
                 <Section
-                  title="Speed Curves"
+                  title={language === "es" ? "Curvas de velocidad" : "Speed Curves"}
                   sectionId="speed-curves"
                   defaultOpen={false}
                 >
@@ -1338,7 +1338,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Alignment"
+                title={language === "es" ? "Alineación" : "Alignment"}
                 sectionId="alignment"
                 defaultOpen={false}
               >
@@ -1354,7 +1354,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Blending"
+                title={language === "es" ? "Mezcla" : "Blending"}
                 sectionId="blending"
                 defaultOpen={false}
               >
@@ -1370,7 +1370,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="3D Transforms"
+                title={language === "es" ? "Transformación 3D" : "3D Transforms"}
                 sectionId="transform-3d"
                 defaultOpen={false}
               >
@@ -1379,7 +1379,7 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {/* Keyframes - Using KeyframeEngine */}
-            <Section title="Keyframes" sectionId="keyframes">
+            <Section title={language === "es" ? "Fotogramas clave" : "Keyframes"} sectionId="keyframes">
               <KeyframesSection clipId={clipId} />
             </Section>
 
@@ -1391,7 +1391,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Transitions"
+                title={language === "es" ? "Transiciones" : "Transitions"}
                 sectionId="transitions"
                 defaultOpen={false}
               >
@@ -1406,7 +1406,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Motion Presets"
+                title={language === "es" ? "Presets de movimiento" : "Motion Presets"}
                 sectionId="motion-presets"
                 defaultOpen={false}
               >
@@ -1422,7 +1422,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Motion Path"
+                title={language === "es" ? "Trayectoria de movimiento" : "Motion Path"}
                 sectionId="motion-path"
                 defaultOpen={false}
               >
@@ -1439,7 +1439,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "sticker") &&
               selectedClip && (
                 <Section
-                  title="Particle Effects"
+                  title={language === "es" ? "Efectos de partículas" : "Particle Effects"}
                   sectionId="particle-effects"
                   defaultOpen={false}
                 >
@@ -1459,7 +1459,7 @@ export const InspectorPanel: React.FC = () => {
               clipType === "svg" ||
               clipType === "sticker") && (
               <Section
-                title="Emphasis Animation"
+                title={language === "es" ? "Animación de énfasis" : "Emphasis Animation"}
                 sectionId="emphasis-animation"
                 defaultOpen={false}
               >
@@ -1469,7 +1469,7 @@ export const InspectorPanel: React.FC = () => {
 
             {/* Chroma Key - Using ChromaKeyEngine - Only for video/image */}
             {showVideoControls && (
-              <Section title="Chroma Key (Green Screen)">
+              <Section title={language === "es" ? "Clave de croma (pantalla verde)" : "Chroma Key (Green Screen)"}>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-text-secondary">
@@ -1507,20 +1507,20 @@ export const InspectorPanel: React.FC = () => {
 
             {/* Motion Tracking - Using MotionTrackingEngine - Only for video/image */}
             {showVideoControls && (
-              <Section title="Motion Tracking" sectionId="motion-tracking">
+              <Section title={language === "es" ? "Seguimiento de movimiento" : "Motion Tracking"} sectionId="motion-tracking">
                 <MotionTrackingSection clipId={clipId} />
               </Section>
             )}
 
             {showVideoEffects && (
-              <Section title="Video Effects" sectionId="video-effects">
+              <Section title={language === "es" ? "Efectos de video" : "Video Effects"} sectionId="video-effects">
                 <VideoEffectsSection clipId={clipId} />
               </Section>
             )}
 
             {showVideoEffects && (
               <Section
-                title="Green Screen"
+                title={language === "es" ? "Pantalla verde" : "Green Screen"}
                 sectionId="green-screen"
                 defaultOpen={false}
               >
@@ -1531,7 +1531,7 @@ export const InspectorPanel: React.FC = () => {
             {/* Picture-in-Picture Section */}
             {showVideoControls && (
               <Section
-                title="Picture-in-Picture"
+                title={language === "es" ? "Imagen sobre imagen" : "Picture-in-Picture"}
                 sectionId="pip"
                 defaultOpen={false}
               >
@@ -1540,26 +1540,26 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {showVideoControls && (
-              <Section title="Masking" sectionId="masking" defaultOpen={false}>
+              <Section title={language === "es" ? "Máscaras" : "Masking"} sectionId="masking" defaultOpen={false}>
                 <MaskSection clipId={clipId} />
               </Section>
             )}
 
             {showVideoControls && (
-              <Section title="Nested Sequences" defaultOpen={false}>
+              <Section title={language === "es" ? "Secuencias anidadas" : "Nested Sequences"} defaultOpen={false}>
                 <NestedSequenceSection clipId={clipId} />
               </Section>
             )}
 
             {showVideoControls && (
-              <Section title="Adjustment Layers" defaultOpen={false}>
+              <Section title={language === "es" ? "Capas de ajuste" : "Adjustment Layers"} defaultOpen={false}>
                 <AdjustmentLayerSection clipId={clipId} />
               </Section>
             )}
 
             {showColorGrading && (
               <Section
-                title="Color Grading"
+                title={language === "es" ? "Corrección de color" : "Color Grading"}
                 sectionId="color-grading"
                 defaultOpen={false}
               >
@@ -1579,7 +1579,7 @@ export const InspectorPanel: React.FC = () => {
 
             {showAudioEffects && (
               <Section
-                title="Audio Effects"
+                title={language === "es" ? "Efectos de audio" : "Audio Effects"}
                 sectionId="audio-effects"
                 defaultOpen={false}
               >
@@ -1589,7 +1589,7 @@ export const InspectorPanel: React.FC = () => {
 
             {showAudioEffects && (
               <Section
-                title="Audio Ducking"
+                title={language === "es" ? "Atenuación automática" : "Audio Ducking"}
                 sectionId="audio-ducking"
                 defaultOpen={false}
               >
@@ -1598,14 +1598,14 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {showTextSection && (
-              <Section title="Text Properties" sectionId="text-properties">
+              <Section title={language === "es" ? "Propiedades de texto" : "Text Properties"} sectionId="text-properties">
                 <TextSection clipId={clipId} />
               </Section>
             )}
 
             {showTextSection && (
               <Section
-                title="Text Animation"
+                title={language === "es" ? "Animación de texto" : "Text Animation"}
                 sectionId="text-animation"
                 defaultOpen={false}
               >
@@ -1615,7 +1615,7 @@ export const InspectorPanel: React.FC = () => {
 
             {showTextSection && (
               <Section
-                title="Text Behind Subject"
+                title={language === "es" ? "Texto detrás del sujeto" : "Text Behind Subject"}
                 sectionId="text-behind-subject"
                 defaultOpen={false}
               >
@@ -1624,14 +1624,14 @@ export const InspectorPanel: React.FC = () => {
             )}
 
             {showShapeSection && (
-              <Section title="Shape Properties" sectionId="shape-properties">
+              <Section title={language === "es" ? "Propiedades de forma" : "Shape Properties"} sectionId="shape-properties">
                 <ShapeSection clipId={clipId} />
               </Section>
             )}
 
             {/* SVG Section */}
             {showSVGSection && (
-              <Section title="SVG Properties">
+              <Section title={language === "es" ? "Propiedades SVG" : "SVG Properties"}>
                 <SVGSection clipId={clipId} />
               </Section>
             )}
@@ -1713,7 +1713,7 @@ export const InspectorPanel: React.FC = () => {
             </div>
 
             {/* Subtitle Text Editor */}
-            <Section title="Text Content">
+            <Section title={language === "es" ? "Contenido del texto" : "Text Content"}>
               <div className="space-y-3">
                 <textarea
                   value={selectedSubtitle.text}
@@ -1729,7 +1729,7 @@ export const InspectorPanel: React.FC = () => {
             </Section>
 
             {/* Subtitle Timing */}
-            <Section title="Timing">
+            <Section title={language === "es" ? "Tiempo" : "Timing"}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
@@ -1767,7 +1767,7 @@ export const InspectorPanel: React.FC = () => {
             </Section>
 
             {/* Subtitle Position */}
-            <Section title="Position">
+            <Section title={language === "es" ? "Posición" : "Position"}>
               <div className="grid grid-cols-3 gap-2">
                 {(["top", "center", "bottom"] as const).map((pos) => (
                   <button
@@ -1793,7 +1793,7 @@ export const InspectorPanel: React.FC = () => {
             </Section>
 
             {/* Subtitle Animation Style */}
-            <Section title="Animation">
+            <Section title={language === "es" ? "Animación" : "Animation"}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">Style</span>
@@ -1907,7 +1907,7 @@ export const InspectorPanel: React.FC = () => {
             </Section>
 
             {/* Subtitle Font Settings */}
-            <Section title="Font">
+            <Section title={language === "es" ? "Fuente" : "Font"}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
