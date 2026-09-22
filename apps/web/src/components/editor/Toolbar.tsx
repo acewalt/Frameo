@@ -576,21 +576,21 @@ export const Toolbar: React.FC = () => {
           },
         ]),
     {
-      label: "1080p High Quality",
+      label: language === "es" ? "1080p Alta calidad" : "1080p High Quality",
       icon: FileVideo,
-      desc: "1920×1080 30fps - High bitrate",
+      desc: language === "es" ? "1920×1080 30fps - Bitrate alto" : "1920×1080 30fps - High bitrate",
       type: "1080p-high",
     },
     {
       label: "1080p 60fps",
       icon: FileVideo,
-      desc: "1920×1080 - Smooth playback",
+      desc: language === "es" ? "1920×1080 - Reproducción fluida" : "1920×1080 - Smooth playback",
       type: "1080p-60",
     },
     {
-      label: "Audio Only (WAV)",
+      label: language === "es" ? "Solo audio (WAV)" : "Audio Only (WAV)",
       icon: Music,
-      desc: "Uncompressed audio",
+      desc: language === "es" ? "Audio sin comprimir" : "Uncompressed audio",
       type: "wav",
     },
   ];
@@ -603,7 +603,7 @@ export const Toolbar: React.FC = () => {
             <button
               onClick={() => navigate("welcome")}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              title="Back to Home"
+              title={t("backHome")}
             >
               <div className="w-8 h-8 group">
                 <svg
@@ -680,7 +680,7 @@ export const Toolbar: React.FC = () => {
               </span>
             </button>
           </TooltipTrigger>
-          <TooltipContent>Back to Home</TooltipContent>
+          <TooltipContent>{t("backHome")}</TooltipContent>
         </Tooltip>
         <div className="h-6 w-px bg-border hidden md:block" />
         <ProjectSwitcher />
@@ -747,7 +747,7 @@ export const Toolbar: React.FC = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 text-text-muted">
               <Command size={14} />
-              <span>Press ? for shortcuts</span>
+              <span>{t("shortcutsHint")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -768,7 +768,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Theme: {themeMode}</p>
+            <p>{t("theme")}: {themeMode}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -782,7 +782,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Settings & API Keys</p>
+            <p>{t("settings")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -796,7 +796,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Project JSON - Export/Import</p>
+            <p>{t("projectJson")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -814,7 +814,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Keyframe Editor</p>
+            <p>{t("keyframeEditor")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -832,7 +832,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Audio Mixer – track volume and master level</p>
+            <p>{t("audioMixer")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -850,7 +850,7 @@ export const Toolbar: React.FC = () => {
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>History - Undo/Redo</p>
+            <p>{t("undoRedo")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -861,11 +861,11 @@ export const Toolbar: React.FC = () => {
               className="flex items-center gap-2 px-3 py-2 bg-error/10 hover:bg-error/20 text-error rounded-lg transition-colors"
             >
               <Circle size={14} className="fill-current" />
-              <span className="text-sm font-medium">Record</span>
+              <span className="text-sm font-medium">{t("record")}</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Screen Recording</p>
+            <p>{t("screenRecording")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -966,7 +966,7 @@ export const Toolbar: React.FC = () => {
                             {option.label}
                             {option.recommended && (
                               <span className="ml-2 text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">
-                                Best Match
+                                {t("bestMatch")}
                               </span>
                             )}
                           </div>
@@ -975,7 +975,7 @@ export const Toolbar: React.FC = () => {
                           </div>
                           {exportEstimates.get(option.type) && (
                             <div className="text-[10px] text-text-secondary mt-1">
-                              Est. {exportEstimates.get(option.type)?.formatted}
+                              {t("estimated")} {exportEstimates.get(option.type)?.formatted}
                             </div>
                           )}
                         </div>
@@ -993,7 +993,7 @@ export const Toolbar: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-primary transition-colors">
-                        Custom Export...
+                        {t("customExport")}
                       </div>
                       <div className="text-xs text-text-muted mt-0.5">
                         Full export settings
