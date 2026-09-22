@@ -14,6 +14,7 @@ import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
 import { useEngineStore } from "../../stores/engine-store";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { useI18n } from "../../i18n";
 import {
   initializePlaybackBridge,
   disposePlaybackBridge,
@@ -178,6 +179,7 @@ const useEngineInitialization = () => {
  * Main Editor Interface Component
  */
 export const EditorInterface: React.FC = () => {
+  const { t, language } = useI18n();
   const { initialized, initializing, initError, initStatus } =
     useEngineInitialization();
 
@@ -476,7 +478,7 @@ export const EditorInterface: React.FC = () => {
       <div className="w-full h-full bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary text-sm">Initializing editor...</p>
+          <p className="text-text-secondary text-sm">{t("initializing")}</p>
           <p className="text-text-muted text-xs mt-2">{initStatus}</p>
           {initError && (
             <p className="text-red-500 text-xs mt-2">{initError}</p>
@@ -497,7 +499,7 @@ export const EditorInterface: React.FC = () => {
             className="h-full shrink-0 min-w-0 overflow-hidden"
             style={{ width: assetsWidth }}
           >
-            <PanelErrorBoundary name="Assets Panel">
+            <PanelErrorBoundary name={language === "es" ? "Panel de recursos" : "Assets Panel"}>
               <AssetsPanel />
             </PanelErrorBoundary>
           </div>
@@ -511,7 +513,7 @@ export const EditorInterface: React.FC = () => {
           </div>
 
           <div className="min-h-0 min-w-0 flex-1 flex overflow-hidden">
-            <PanelErrorBoundary name="Preview">
+            <PanelErrorBoundary name={language === "es" ? "Vista previa" : "Preview"}>
               <Preview />
             </PanelErrorBoundary>
           </div>
@@ -528,7 +530,7 @@ export const EditorInterface: React.FC = () => {
             className="h-full shrink-0 min-w-0 overflow-hidden"
             style={{ width: inspectorWidth }}
           >
-            <PanelErrorBoundary name="Inspector">
+            <PanelErrorBoundary name={language === "es" ? "Inspector" : "Inspector"}>
               <InspectorPanel />
             </PanelErrorBoundary>
           </div>
@@ -538,7 +540,7 @@ export const EditorInterface: React.FC = () => {
               ref={keyframePanelRef}
               className="h-full shrink-0 min-w-0 overflow-hidden"
             >
-              <PanelErrorBoundary name="Keyframe Editor">
+              <PanelErrorBoundary name={t("keyframeEditor")}>
                 <KeyframeEditorPanel
                   clip={selectedClip}
                   onClose={() => setKeyframeEditorOpen(false)}
@@ -565,7 +567,7 @@ export const EditorInterface: React.FC = () => {
 
         {panels.audioMixer?.visible && (
           <div ref={audioMixerRef} className="shrink-0">
-            <PanelErrorBoundary name="Audio Mixer">
+            <PanelErrorBoundary name={t("audioMixer")}>
               <AudioMixer
                 visible
                 onClose={() => setPanelVisible("audioMixer", false)}
@@ -578,7 +580,7 @@ export const EditorInterface: React.FC = () => {
           style={{ height: timelineHeight }}
           className="min-h-0 shrink-0 flex flex-col overflow-hidden"
         >
-          <PanelErrorBoundary name="Timeline">
+          <PanelErrorBoundary name={language === "es" ? "Línea de tiempo" : "Timeline"}>
             <Timeline />
           </PanelErrorBoundary>
         </div>
