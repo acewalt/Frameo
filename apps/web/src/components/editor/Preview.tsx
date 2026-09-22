@@ -5207,6 +5207,8 @@ export const Preview: React.FC = () => {
       isInteractingRef.current = true;
       setInteractionMode("resize");
       setActiveHandle(handle);
+      setInteractionTargetType("clip");
+      interactionTargetIdRef.current = clip.id;
       interactionStartRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -5240,6 +5242,8 @@ export const Preview: React.FC = () => {
 
       isInteractingRef.current = true;
       setInteractionMode("move");
+      setInteractionTargetType("clip");
+      interactionTargetIdRef.current = clip.id;
       interactionStartRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -5868,8 +5872,7 @@ export const Preview: React.FC = () => {
             .then(() => renderFrameDirectly(playheadPosition))
             .finally(() => {
               liveTransformRef.current = null;
-              liveTransformRef.current = null;
-          setLiveTransform(null);
+              setLiveTransform(null);
             });
         } else {
           liveTransformRef.current = null;
