@@ -170,6 +170,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
     };
 
     const handlePendingPointerUp = (e: PointerEvent) => {
+      if (!dragPendingRef.current.active) return;
       dragPendingRef.current.active = false;
       setIsPendingDrag(false);
       onSelect(clip.id, e.shiftKey || e.metaKey);
