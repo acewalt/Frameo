@@ -16,6 +16,7 @@ import {
   Maximize2,
   Minimize2,
   Move,
+  RotateCw,
   Loader2,
   ZoomIn,
 } from "lucide-react";
@@ -369,7 +370,7 @@ interface ClipWithPlaceholder {
 }
 
 export const Preview: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoAreaRef = useRef<HTMLDivElement>(null);
@@ -541,6 +542,7 @@ export const Preview: React.FC = () => {
     transform: {
       position?: { x: number; y: number };
       scale?: { x: number; y: number };
+      rotation?: number;
     };
   } | null>(null);
   const pendingOverlayTransformRef = useRef<{
@@ -549,7 +551,16 @@ export const Preview: React.FC = () => {
     transform: {
       position?: { x: number; y: number };
       scale?: { x: number; y: number };
+      rotation?: number;
     };
+  } | null>(null);
+  const rotationStartRef = useRef<{
+    centerX: number;
+    centerY: number;
+    startAngle: number;
+    startRotation: number;
+    target: "clip" | "text-clip" | "shape-clip";
+    id: string;
   } | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
@@ -566,6 +577,7 @@ export const Preview: React.FC = () => {
   const [liveTransform, setLiveTransform] = useState<{
     position: { x: number; y: number };
     scale: { x: number; y: number };
+    rotation?: number;
   } | null>(null);
 
   // Track interaction target type (video clip or text clip)
@@ -4469,6 +4481,7 @@ export const Preview: React.FC = () => {
           ...clipTransform,
           position: liveTransform.position,
           scale: liveTransform.scale,
+          rotation: liveTransform.rotation ?? clipTransform.rotation,
         }
       : clipTransform;
 
@@ -4515,6 +4528,7 @@ export const Preview: React.FC = () => {
       centerX,
       centerY,
       displayScale,
+      rotation: transform.rotation || 0,
     };
   }, [
     selectedClip,
@@ -4585,6 +4599,7 @@ export const Preview: React.FC = () => {
       centerX,
       centerY,
       displayScale,
+      rotation: transform.rotation || 0,
       isTextClip: true,
     };
   }, [selectedTextClip, settings.width, settings.height, canvasSize]);
@@ -4688,6 +4703,7 @@ export const Preview: React.FC = () => {
       centerX,
       centerY,
       displayScale,
+      rotation: transform.rotation || 0,
       isShapeClip: true,
     };
   }, [selectedShapeClip, settings.width, settings.height, canvasSize]);
@@ -4885,6 +4901,41 @@ export const Preview: React.FC = () => {
     canvasSize,
     playheadPosition,
   ]);
+
+  const beginRotation = useCallback(
+    (
+      e: React.MouseEvent,
+      target: "clip" | "text-clip" | "shape-clip",
+      id: string,
+      rotation: number,
+      bounds: { centerX: number; centerY: number },
+    ) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const overlayRect = overlayRef.current?.getBoundingClientRect();
+      if (!overlayRect) return;
+
+      const centerX = overlayRect.left + bounds.centerX;
+      const centerY = overlayRect.top + bounds.centerY;
+      const startAngle =
+        (Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180) /
+        Math.PI;
+
+      isInteractingRef.current = true;
+      setInteractionMode("rotate");
+      setInteractionTargetType(target);
+      interactionTargetIdRef.current = id;
+      rotationStartRef.current = {
+        centerX,
+        centerY,
+        startAngle,
+        startRotation: rotation || 0,
+        target,
+        id,
+      };
+    },
+    [],
+  );
 
   const handleHandleMouseDown = useCallback(
     (e: React.MouseEvent, handle: HandlePosition) => {
@@ -5105,7 +5156,71 @@ export const Preview: React.FC = () => {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (interactionMode === "none" || !interactionStartRef.current) return;
+      if (interactionMode === "none") return;
+
+      if (interactionMode === "rotate" && rotationStartRef.current) {
+        const rotationStart = rotationStartRef.current;
+        const angle =
+          (Math.atan2(
+            e.clientY - rotationStart.centerY,
+            e.clientX - rotationStart.centerX,
+          ) *
+            180) /
+          Math.PI;
+        let nextRotation =
+          rotationStart.startRotation + (angle - rotationStart.startAngle);
+        if (e.shiftKey) nextRotation = Math.round(nextRotation / 15) * 15;
+
+        const rotationTransform = { rotation: nextRotation };
+
+        if (rotationStart.target === "clip") {
+          const clip = selectedClip || clipAtPlayhead;
+          if (!clip) return;
+          pendingTransformRef.current = {
+            clipId: rotationStart.id,
+            transform: rotationTransform,
+          };
+          const currentTransform = clip.transform || {
+            position: { x: 0, y: 0 },
+            scale: { x: 1, y: 1 },
+            rotation: 0,
+          };
+          setLiveTransform({
+            position: currentTransform.position,
+            scale: currentTransform.scale,
+            rotation: nextRotation,
+          });
+        } else {
+          pendingOverlayTransformRef.current = {
+            type: rotationStart.target,
+            id: rotationStart.id,
+            transform: rotationTransform,
+          };
+        }
+
+        if (!rafIdRef.current) {
+          rafIdRef.current = requestAnimationFrame(() => {
+            const pendingClip = pendingTransformRef.current;
+            const pendingOverlay = pendingOverlayTransformRef.current;
+            if (pendingClip) {
+              updateClipTransform(pendingClip.clipId, pendingClip.transform);
+              pendingTransformRef.current = null;
+            }
+            if (pendingOverlay?.type === "text-clip") {
+              updateTextTransform(pendingOverlay.id, pendingOverlay.transform);
+              pendingOverlayTransformRef.current = null;
+            } else if (pendingOverlay?.type === "shape-clip") {
+              updateShapeTransform(pendingOverlay.id, pendingOverlay.transform);
+              pendingOverlayTransformRef.current = null;
+            }
+            renderInteractiveFrame();
+            rafIdRef.current = null;
+          });
+        }
+        return;
+      }
+
+      if (!interactionStartRef.current) return;
 
       if (
         interactionTargetType === "text-clip" &&
@@ -5445,6 +5560,7 @@ export const Preview: React.FC = () => {
     }
     setInteractionTargetType(null);
     interactionTargetIdRef.current = null;
+    rotationStartRef.current = null;
     if (rafIdRef.current) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
@@ -5505,6 +5621,9 @@ export const Preview: React.FC = () => {
         setInteractionMode("none");
         setActiveHandle(null);
         interactionStartRef.current = null;
+        rotationStartRef.current = null;
+        setInteractionTargetType(null);
+        interactionTargetIdRef.current = null;
         setLiveTransform(null);
 
         if (wasInteracting) {
@@ -5807,6 +5926,23 @@ export const Preview: React.FC = () => {
                 <Move size={14} className="text-white" />
               </div>
 
+              {/* Rotation handle */}
+              <button
+                className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-primary text-primary flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-primary hover:text-white transition-colors"
+                onMouseDown={(e) =>
+                  beginRotation(
+                    e,
+                    "clip",
+                    (selectedClip || clipAtPlayhead)!.id,
+                    (selectedClip || clipAtPlayhead)!.transform?.rotation || 0,
+                    clipBounds,
+                  )
+                }
+                title={language === "es" ? "Arrastrar para rotar · Shift: 15°" : "Drag to rotate · Shift: 15°"}
+              >
+                <RotateCw size={14} />
+              </button>
+
               {/* Aspect ratio lock toggle */}
               <button
                 className={`absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded pointer-events-auto transition-colors ${
@@ -5887,6 +6023,23 @@ export const Preview: React.FC = () => {
               >
                 <Move size={14} className="text-white" />
               </div>
+
+              {/* Rotation handle */}
+              <button
+                className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-cyan-500 text-cyan-400 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-500 hover:text-white transition-colors"
+                onMouseDown={(e) =>
+                  beginRotation(
+                    e,
+                    "text-clip",
+                    activeTextClip!.id,
+                    activeTextClip!.transform.rotation || 0,
+                    textClipBounds,
+                  )
+                }
+                title={language === "es" ? "Arrastrar para rotar · Shift: 15°" : "Drag to rotate · Shift: 15°"}
+              >
+                <RotateCw size={14} />
+              </button>
 
               {/* Aspect ratio lock toggle */}
               <button
@@ -5969,6 +6122,23 @@ export const Preview: React.FC = () => {
               >
                 <Move size={14} className="text-white" />
               </div>
+
+              {/* Rotation handle */}
+              <button
+                className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-green-500 text-green-400 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-green-500 hover:text-white transition-colors"
+                onMouseDown={(e) =>
+                  beginRotation(
+                    e,
+                    "shape-clip",
+                    activeShapeClip!.id,
+                    activeShapeClip!.transform.rotation || 0,
+                    shapeClipBounds,
+                  )
+                }
+                title={language === "es" ? "Arrastrar para rotar · Shift: 15°" : "Drag to rotate · Shift: 15°"}
+              >
+                <RotateCw size={14} />
+              </button>
 
               {/* Aspect ratio lock toggle */}
               <button
