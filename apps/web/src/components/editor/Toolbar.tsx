@@ -21,6 +21,7 @@ import {
   Diamond,
   Sparkles,
   Play,
+  Languages,
 } from "lucide-react";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
@@ -44,6 +45,7 @@ import { SettingsDialog } from "./settings/SettingsDialog";
 import { toast } from "../../stores/notification-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
+import { useI18n } from "../../i18n";
 import { startTour, ONBOARDING_KEY, startMoGraphTour, MOGRAPH_TOUR_KEY } from "./tour";
 import {
   DropdownMenu,
@@ -78,6 +80,7 @@ interface ExportState {
 }
 
 export const Toolbar: React.FC = () => {
+  const { language, setLanguage, t } = useI18n();
   const { project } = useProjectStore();
   const {
     openModal,
@@ -673,7 +676,7 @@ export const Toolbar: React.FC = () => {
                 </svg>
               </div>
               <span className="text-lg font-medium text-text-primary tracking-wide hidden lg:block">
-                Open Reel
+                Frameo
               </span>
             </button>
           </TooltipTrigger>
@@ -715,8 +718,8 @@ export const Toolbar: React.FC = () => {
             }`}
           >
             {hasSelectedClip
-              ? "Search effects for selected clip..."
-              : "Search tools, effects, or ask AI..."}
+              ? "{t("searchSelected")}"
+              : "{t("searchTools")}"}
           </span>
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-background-tertiary">
             <Command size={10} className="text-text-muted" />
@@ -737,11 +740,11 @@ export const Toolbar: React.FC = () => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem onClick={handleStartTour} className="gap-2">
               <Play size={14} />
-              <span>Editor Tour</span>
+              <span>{t("editorTour")}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleStartMoGraphTour} className="gap-2">
               <Sparkles size={14} className="text-purple-400" />
-              <span>Animation & Effects Tour</span>
+              <span>{t("animationTour")}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 text-text-muted">
@@ -868,6 +871,12 @@ export const Toolbar: React.FC = () => {
           </TooltipContent>
         </Tooltip>
 
+        <div className="flex items-center rounded-lg border border-border bg-background-secondary p-0.5" title={t("language")}>
+          <Languages size={13} className="mx-1.5 text-text-muted" />
+          <button onClick={() => setLanguage("es")} className={`px-1.5 py-1 rounded text-[10px] ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
+          <button onClick={() => setLanguage("en")} className={`px-1.5 py-1 rounded text-[10px] ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
+        </div>
+
         <div className="relative">
           {exportState.isExporting ? (
             <div className="h-10 px-4 bg-background-secondary border border-border rounded-lg flex items-center gap-3 min-w-[200px]">
@@ -905,7 +914,7 @@ export const Toolbar: React.FC = () => {
           ) : exportState.complete ? (
             <div className="h-10 px-4 bg-primary/10 border border-primary/30 rounded-lg flex items-center gap-2">
               <Check size={14} className="text-primary" />
-              <span className="text-xs text-primary">Downloaded!</span>
+              <span className="text-xs text-primary">{t("exportComplete")}</span>
             </div>
           ) : (
             <DropdownMenu open={isExportOpen} onOpenChange={setIsExportOpen}>
@@ -915,7 +924,7 @@ export const Toolbar: React.FC = () => {
                     isExportOpen ? "translate-y-0 shadow-none" : ""
                   }`}
                 >
-                  <span className="text-sm tracking-wider">EXPORT</span>
+                  <span className="text-sm tracking-wider">{t("export").toUpperCase()}</span>
                   <ChevronDown
                     size={14}
                     className={`transition-transform duration-200 ${
@@ -989,7 +998,7 @@ export const Toolbar: React.FC = () => {
                         Custom Export...
                       </div>
                       <div className="text-xs text-text-muted mt-0.5">
-                        Full settings with AI upscaling
+                        Full export settings
                       </div>
                     </div>
                     <Settings
