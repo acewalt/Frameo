@@ -80,6 +80,7 @@ export class TransitionEngine {
     this.ctx.clearRect(0, 0, this.width, this.height);
     switch (transition.type) {
       case "crossfade":
+      case "dissolve":
         await this.renderCrossfade(outgoingFrame, incomingFrame, easedProgress);
         break;
       case "dipToBlack":
@@ -136,6 +137,22 @@ export class TransitionEngine {
           incomingFrame,
           easedProgress,
           (transition.params.direction as string) || "left",
+        );
+        break;
+      case "blur":
+        await this.renderBlur(
+          outgoingFrame,
+          incomingFrame,
+          easedProgress,
+          (transition.params.amount as number) || 24,
+        );
+        break;
+      case "iris":
+        await this.renderIris(
+          outgoingFrame,
+          incomingFrame,
+          easedProgress,
+          (transition.params.shape as string) || "circle",
         );
         break;
       default:
@@ -385,6 +402,75 @@ export class TransitionEngine {
     ctx.restore();
   }
 
+  private async renderBlur(
+    outgoing: ImageBitmap,
+    incoming: ImageBitmap,
+    progress: number,
+    amount: number,
+  ): Promise<void> {
+    const ctx = this.getContext();
+    const blurPx = Math.max(0, amount) * Math.sin(Math.PI * progress);
+
+    ctx.save();
+    ctx.filter = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : "none";
+    ctx.globalAlpha = 1 - progress;
+    ctx.drawImage(outgoing, 0, 0, this.width, this.height);
+    ctx.globalAlpha = progress;
+    ctx.drawImage(incoming, 0, 0, this.width, this.height);
+    ctx.restore();
+    ctx.filter = "none";
+    ctx.globalAlpha = 1;
+  }
+
+  private async renderIris(
+    outgoing: ImageBitmap,
+    incoming: ImageBitmap,
+    progress: number,
+    shape: string,
+  ): Promise<void> {
+    const ctx = this.getContext();
+    const cx = this.width / 2;
+    const cy = this.height / 2;
+    const p = Math.max(0, Math.min(1, progress));
+
+    ctx.drawImage(outgoing, 0, 0, this.width, this.height);
+    ctx.save();
+    ctx.beginPath();
+
+    if (shape === "rectangle") {
+      const w = this.width * p;
+      const h = this.height * p;
+      ctx.rect(cx - w / 2, cy - h / 2, w, h);
+    } else if (shape === "diamond") {
+      const rx = this.width * 0.72 * p;
+      const ry = this.height * 0.72 * p;
+      ctx.moveTo(cx, cy - ry);
+      ctx.lineTo(cx + rx, cy);
+      ctx.lineTo(cx, cy + ry);
+      ctx.lineTo(cx - rx, cy);
+      ctx.closePath();
+    } else if (shape === "star") {
+      const outer = Math.hypot(this.width, this.height) * 0.72 * p;
+      const inner = outer * 0.45;
+      for (let i = 0; i < 10; i++) {
+        const radius = i % 2 === 0 ? outer : inner;
+        const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    } else {
+      const radius = Math.hypot(this.width, this.height) * 0.55 * p;
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    }
+
+    ctx.clip();
+    ctx.drawImage(incoming, 0, 0, this.width, this.height);
+    ctx.restore();
+  }
+
   private async renderPush(
     outgoing: ImageBitmap,
     incoming: ImageBitmap,
@@ -530,6 +616,8 @@ export class TransitionEngine {
     switch (type) {
       case "crossfade":
         return { curve: "ease" };
+      case "dissolve":
+        return { curve: "linear" };
       case "dipToBlack":
         return { holdDuration: 0.1 };
       case "dipToWhite":
@@ -542,6 +630,10 @@ export class TransitionEngine {
         return { scale: 2, center: { x: 0.5, y: 0.5 } };
       case "push":
         return { direction: "left" };
+      case "blur":
+        return { amount: 24 };
+      case "iris":
+        return { shape: "circle", invert: false };
       default:
         return {};
     }
@@ -619,12 +711,15 @@ export class TransitionEngine {
   getAvailableTransitionTypes(): TransitionType[] {
     return [
       "crossfade",
+      "dissolve",
       "dipToBlack",
       "dipToWhite",
       "wipe",
       "slide",
       "zoom",
       "push",
+      "blur",
+      "iris",
     ];
   }
 
