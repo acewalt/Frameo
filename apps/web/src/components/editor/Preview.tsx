@@ -774,6 +774,8 @@ export const Preview: React.FC = () => {
   // paused Canvas2D, WebGPU playback and a temporary drag-only DOM layer.
   const domMediaUrlCacheRef = useRef<Map<string, string>>(new Map());
   const domVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const domVideoWantedTimeRef = useRef<Map<string, number>>(new Map());
+  const domVideoSeekRafRef = useRef<Map<string, number>>(new Map());
 
   const getDomMediaUrl = useCallback(
     (mediaId: string): string | null => {
@@ -792,6 +794,42 @@ export const Preview: React.FC = () => {
     [getMediaItem],
   );
 
+  const queueDomVideoSeek = useCallback(
+    (
+      clipId: string,
+      video: HTMLVideoElement,
+      wanted: number,
+      force = false,
+    ) => {
+      if (!Number.isFinite(wanted)) return;
+      domVideoWantedTimeRef.current.set(clipId, wanted);
+
+      if (domVideoSeekRafRef.current.has(clipId)) return;
+
+      const rafId = requestAnimationFrame(() => {
+        domVideoSeekRafRef.current.delete(clipId);
+        const target = domVideoWantedTimeRef.current.get(clipId);
+        if (target === undefined || video.readyState < HTMLMediaElement.HAVE_METADATA) {
+          return;
+        }
+
+        const tolerance = domPlayingRef.current ? 0.18 : 0.025;
+        if (!force && Math.abs((video.currentTime || 0) - target) < tolerance) {
+          return;
+        }
+
+        try {
+          video.currentTime = target;
+        } catch {
+          // A fresh metadata event will retry the latest requested time.
+        }
+      });
+
+      domVideoSeekRafRef.current.set(clipId, rafId);
+    },
+    [],
+  );
+
   useEffect(() => {
     return () => {
       for (const url of domMediaUrlCacheRef.current.values()) {
@@ -802,6 +840,11 @@ export const Preview: React.FC = () => {
         video.pause();
       }
       domVideoRefs.current.clear();
+      for (const rafId of domVideoSeekRafRef.current.values()) {
+        cancelAnimationFrame(rafId);
+      }
+      domVideoSeekRafRef.current.clear();
+      domVideoWantedTimeRef.current.clear();
     };
   }, []);
 
@@ -1168,11 +1211,7 @@ export const Preview: React.FC = () => {
         Number.isFinite(wanted) &&
         Math.abs((video.currentTime || 0) - wanted) > tolerance
       ) {
-        try {
-          video.currentTime = wanted;
-        } catch {
-          // Metadata can race on the first render; loadedmetadata will resync.
-        }
+        queueDomVideoSeek(clipId, video, wanted);
       }
 
       if (isPlaying) {
@@ -1191,6 +1230,7 @@ export const Preview: React.FC = () => {
     playbackRate,
     isMuted,
     timelineTracks,
+    queueDomVideoSeek,
   ]);
 
   // Export-to-video style preview clock. The DOM media elements are the visual
@@ -6602,11 +6642,7 @@ export const Preview: React.FC = () => {
                         (item.clip.inPoint || 0) +
                         Math.max(0, domPlayheadRef.current - item.clip.startTime);
                       if (Number.isFinite(wanted)) {
-                        try {
-                          video.currentTime = wanted;
-                        } catch {
-                          // Browser will retry through the sync effect.
-                        }
+                        queueDomVideoSeek(item.clip.id, video, wanted, true);
                       }
                       if (domPlayingRef.current) {
                         void video.play().catch(() => undefined);
