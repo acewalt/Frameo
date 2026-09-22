@@ -724,7 +724,7 @@ export const Timeline: React.FC = () => {
             <button
               onClick={handleSplit}
               disabled={selectedClipIds.length !== 1}
-              title="Split clip at playhead (S)"
+              title={language === "es" ? "Dividir clip en el cabezal (S)" : "Split clip at playhead (S)"}
               className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
                 selectedClipIds.length === 1
                   ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30"
@@ -732,13 +732,13 @@ export const Timeline: React.FC = () => {
               }`}
             >
               <Scissors size={14} />
-              <span className="text-[10px] font-medium">SPLIT</span>
+              <span className="text-[10px] font-medium">{language === "es" ? "DIVIDIR" : "SPLIT"}</span>
             </button>
             <IconButton
               icon={Trash2}
               onClick={handleDelete}
               disabled={selectedClipIds.length === 0}
-              title="Delete clip (Del)"
+              title={language === "es" ? "Eliminar clip (Supr)" : "Delete clip (Del)"}
               className="hover:text-red-500"
             />
           </div>
@@ -749,34 +749,34 @@ export const Timeline: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <button
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors"
-                title="Add new track"
+                title={language === "es" ? "Añadir pista" : "Add new track"}
               >
                 <Plus size={14} />
-                <span className="text-[11px] font-semibold">Add Track</span>
+                <span className="text-[11px] font-semibold">{language === "es" ? "Añadir pista" : "Add Track"}</span>
                 <ChevronDownIcon size={12} className="ml-0.5 opacity-60" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-48">
               <DropdownMenuItem onClick={() => addTrack("video")}>
                 <Film size={16} className="text-green-400" />
-                <span>Video Track</span>
+                <span>{language === "es" ? "Pista de video" : "Video Track"}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addTrack("audio")}>
                 <Music size={16} className="text-blue-400" />
-                <span>Audio Track</span>
+                <span>{language === "es" ? "Pista de audio" : "Audio Track"}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => addTrack("image")}>
                 <Image size={16} className="text-purple-400" />
-                <span>Image Track</span>
+                <span>{language === "es" ? "Pista de imagen" : "Image Track"}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addTrack("text")}>
                 <Type size={16} className="text-yellow-400" />
-                <span>Text Track</span>
+                <span>{language === "es" ? "Pista de texto" : "Text Track"}</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addTrack("graphics")}>
                 <Shapes size={16} className="text-pink-400" />
-                <span>Graphics Track</span>
+                <span>{language === "es" ? "Pista de gráficos" : "Graphics Track"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -791,10 +791,10 @@ export const Timeline: React.FC = () => {
                     ? "bg-primary/20 text-primary"
                     : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
                 }`}
-                title="Manage track layers"
+                title={language === "es" ? "Administrar capas de pistas" : "Manage track layers"}
               >
                 <Layers size={14} />
-                <span className="text-[10px] font-medium tracking-wide">LAYERS</span>
+                <span className="text-[10px] font-medium tracking-wide">{language === "es" ? "CAPAS" : "LAYERS"}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent
@@ -805,7 +805,7 @@ export const Timeline: React.FC = () => {
             >
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-background-tertiary">
                 <span className="text-xs font-semibold text-text-primary">
-                  Track Layers
+                  {language === "es" ? "Capas de pistas" : "Track Layers"}
                 </span>
               </div>
               <div className="p-2 max-h-60 overflow-y-auto">
@@ -874,7 +874,7 @@ export const Timeline: React.FC = () => {
             title={snapSettings.enabled ? (language === "es" ? "Desactivar magnetismo" : "Disable snapping") : (language === "es" ? "Activar magnetismo" : "Enable snapping")}
           >
             <Magnet size={14} />
-            <span className="text-[10px] font-medium tracking-wide">SNAP</span>
+            <span className="text-[10px] font-medium tracking-wide">{language === "es" ? "IMÁN" : "SNAP"}</span>
           </button>
         </div>
 
