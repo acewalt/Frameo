@@ -14,7 +14,6 @@ interface ClipComponentProps {
   allTracks: Track[];
   pixelsPerSecond: number;
   isSelected: boolean;
-  trackHeights: Map<string, number>;
   timelineRef: React.RefObject<HTMLDivElement>;
   onSelect: (clipId: string, addToSelection: boolean) => void;
   onMoveClip: (
@@ -40,7 +39,6 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
   allTracks,
   pixelsPerSecond,
   isSelected,
-  trackHeights,
   timelineRef,
   onSelect,
   onMoveClip,
@@ -274,21 +272,27 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       );
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = async () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
 
       const { time, targetTrackId, valid } = pendingDropRef.current;
+
       if (valid) {
-        onMoveClip(clip.id, time, targetTrackId);
+        // Keep rendering the local drag position until the project mutation is
+        // committed. Ending the gesture first caused a visible snap back to the
+        // old timeline position before React received the new project.
+        await Promise.resolve(onMoveClip(clip.id, time, targetTrackId));
       }
 
-      setIsDragging(false);
-      setDragYOffset(0);
-      setDragPreviewTime(clip.startTime);
-      setIsInvalidDrop(false);
-      onSnapIndicator(null);
+      requestAnimationFrame(() => {
+        setIsDragging(false);
+        setDragYOffset(0);
+        setDragPreviewTime(time);
+        setIsInvalidDrop(false);
+        onSnapIndicator(null);
+      });
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
