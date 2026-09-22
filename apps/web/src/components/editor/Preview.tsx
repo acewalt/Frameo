@@ -584,6 +584,7 @@ export const Preview: React.FC = () => {
   } | null>(null);
   const [interactionMediaUrl, setInteractionMediaUrl] = useState<string | null>(null);
   const interactionMediaVideoRef = useRef<HTMLVideoElement | null>(null);
+  const liveTransformRef = useRef<typeof liveTransform>(null);
 
   // Track interaction target type (video clip or text clip)
   const [interactionTargetType, setInteractionTargetType] = useState<
@@ -2015,6 +2016,21 @@ export const Preview: React.FC = () => {
                     clip.keyframes,
                     clipLocalTime,
                   );
+
+                  if (
+                    isInteractingRef.current &&
+                    interactionTargetIdRef.current === clip.id &&
+                    liveTransformRef.current
+                  ) {
+                    animatedTransform = {
+                      ...animatedTransform,
+                      position: liveTransformRef.current.position,
+                      scale: liveTransformRef.current.scale,
+                      rotation:
+                        liveTransformRef.current.rotation ??
+                        animatedTransform.rotation,
+                    };
+                  }
 
                   if (
                     clip.emphasisAnimation &&
@@ -3830,6 +3846,21 @@ export const Preview: React.FC = () => {
             );
 
             if (
+              isInteractingRef.current &&
+              interactionTargetIdRef.current === clip.id &&
+              liveTransformRef.current
+            ) {
+              transform = {
+                ...transform,
+                position: liveTransformRef.current.position,
+                scale: liveTransformRef.current.scale,
+                rotation:
+                  liveTransformRef.current.rotation ??
+                  transform.rotation,
+              };
+            }
+
+            if (
               clip.emphasisAnimation &&
               clip.emphasisAnimation.type !== "none"
             ) {
@@ -4399,6 +4430,7 @@ export const Preview: React.FC = () => {
   const modifiedRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderInFlightRef = useRef<boolean>(false);
   const interactiveRenderPromiseRef = useRef<Promise<void> | null>(null);
+  const interactiveRenderQueuedRef = useRef(false);
   const directRenderRequestSeqRef = useRef(0);
 
   useEffect(() => {
@@ -5369,18 +5401,30 @@ export const Preview: React.FC = () => {
   );
 
   const renderInteractiveFrame = useCallback(() => {
-    if (renderInFlightRef.current) return;
-    renderInFlightRef.current = true;
-    const task = renderFrameDirectly(playheadPosition)
-      .catch(() => false)
-      .then(() => undefined)
-      .finally(() => {
-        renderInFlightRef.current = false;
-        if (interactiveRenderPromiseRef.current === task) {
-          interactiveRenderPromiseRef.current = null;
-        }
-      });
-    interactiveRenderPromiseRef.current = task;
+    if (renderInFlightRef.current) {
+      interactiveRenderQueuedRef.current = true;
+      return;
+    }
+
+    const run = () => {
+      renderInFlightRef.current = true;
+      const task = renderFrameDirectly(playheadPosition)
+        .catch(() => false)
+        .then(() => undefined)
+        .finally(() => {
+          renderInFlightRef.current = false;
+          if (interactiveRenderPromiseRef.current === task) {
+            interactiveRenderPromiseRef.current = null;
+          }
+          if (interactiveRenderQueuedRef.current && isInteractingRef.current) {
+            interactiveRenderQueuedRef.current = false;
+            run();
+          }
+        });
+      interactiveRenderPromiseRef.current = task;
+    };
+
+    run();
   }, [renderFrameDirectly, playheadPosition]);
 
   const handleMouseMove = useCallback(
@@ -5414,11 +5458,13 @@ export const Preview: React.FC = () => {
             scale: { x: 1, y: 1 },
             rotation: 0,
           };
-          setLiveTransform({
+          const nextLiveTransform = {
             position: currentTransform.position,
             scale: currentTransform.scale,
             rotation: nextRotation,
-          });
+          };
+          liveTransformRef.current = nextLiveTransform;
+          setLiveTransform(nextLiveTransform);
         } else {
           pendingOverlayTransformRef.current = {
             type: rotationStart.target,
@@ -5431,9 +5477,8 @@ export const Preview: React.FC = () => {
           rafIdRef.current = requestAnimationFrame(() => {
             const pendingClip = pendingTransformRef.current;
             const pendingOverlay = pendingOverlayTransformRef.current;
-            if (pendingClip) {
-              updateClipTransform(pendingClip.clipId, pendingClip.transform);
-              pendingTransformRef.current = null;
+            if (pendingClip && !canUseRealtimeDomTransform) {
+              renderInteractiveFrame();
             }
             if (pendingOverlay?.type === "text-clip") {
               updateTextTransform(pendingOverlay.id, pendingOverlay.transform);
@@ -5441,9 +5486,6 @@ export const Preview: React.FC = () => {
             } else if (pendingOverlay?.type === "shape-clip") {
               updateShapeTransform(pendingOverlay.id, pendingOverlay.transform);
               pendingOverlayTransformRef.current = null;
-            }
-            if (!canUseRealtimeDomTransform) {
-              renderInteractiveFrame();
             }
             rafIdRef.current = null;
           });
@@ -5735,26 +5777,18 @@ export const Preview: React.FC = () => {
         position: { x: 0, y: 0 },
         scale: { x: 1, y: 1 },
       };
-      setLiveTransform({
+      const nextLiveTransform = {
         position: newTransform.position || currentTransform.position,
         scale: newTransform.scale || currentTransform.scale,
-      });
+        rotation: currentTransform.rotation || 0,
+      };
+      liveTransformRef.current = nextLiveTransform;
+      setLiveTransform(nextLiveTransform);
 
       if (!rafIdRef.current) {
         rafIdRef.current = requestAnimationFrame(() => {
-          const now = performance.now();
-          if (
-            pendingTransformRef.current &&
-            now - lastStoreUpdateRef.current >= STORE_UPDATE_THROTTLE_MS
-          ) {
-            lastStoreUpdateRef.current = now;
-            updateClipTransform(
-              pendingTransformRef.current.clipId,
-              pendingTransformRef.current.transform,
-            );
-            if (!canUseRealtimeDomTransform) {
-              renderInteractiveFrame();
-            }
+          if (pendingTransformRef.current && !canUseRealtimeDomTransform) {
+            renderInteractiveFrame();
           }
           rafIdRef.current = null;
         });
@@ -5833,9 +5867,12 @@ export const Preview: React.FC = () => {
             .catch(() => undefined)
             .then(() => renderFrameDirectly(playheadPosition))
             .finally(() => {
-              setLiveTransform(null);
+              liveTransformRef.current = null;
+              liveTransformRef.current = null;
+          setLiveTransform(null);
             });
         } else {
+          liveTransformRef.current = null;
           setLiveTransform(null);
         }
       };
