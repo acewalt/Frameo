@@ -24,6 +24,7 @@ import { useProjectStore } from "../../stores/project-store";
 import { useTimelineStore } from "../../stores/timeline-store";
 import { useUIStore } from "../../stores/ui-store";
 import { useThemeStore } from "../../stores/theme-store";
+import { useI18n } from "../../i18n";
 import { getRenderBridge } from "../../bridges/render-bridge";
 import { getEffectsBridge } from "../../bridges/effects-bridge";
 import {
@@ -368,6 +369,7 @@ interface ClipWithPlaceholder {
 }
 
 export const Preview: React.FC = () => {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoAreaRef = useRef<HTMLDivElement>(null);
@@ -536,6 +538,14 @@ export const Preview: React.FC = () => {
   } | null>(null);
   const pendingTransformRef = useRef<{
     clipId: string;
+    transform: {
+      position?: { x: number; y: number };
+      scale?: { x: number; y: number };
+    };
+  } | null>(null);
+  const pendingOverlayTransformRef = useRef<{
+    type: "text-clip" | "shape-clip";
+    id: string;
     transform: {
       position?: { x: number; y: number };
       scale?: { x: number; y: number };
@@ -5145,15 +5155,24 @@ export const Preview: React.FC = () => {
           };
         }
 
+        if (interactionTargetIdRef.current) {
+          pendingOverlayTransformRef.current = {
+            type: "text-clip",
+            id: interactionTargetIdRef.current,
+            transform: newTransform,
+          };
+        }
         if (!rafIdRef.current) {
           rafIdRef.current = requestAnimationFrame(() => {
             const now = performance.now();
+            const pending = pendingOverlayTransformRef.current;
             if (
-              now - lastStoreUpdateRef.current >= STORE_UPDATE_THROTTLE_MS &&
-              interactionTargetIdRef.current
+              pending?.type === "text-clip" &&
+              now - lastStoreUpdateRef.current >= STORE_UPDATE_THROTTLE_MS
             ) {
               lastStoreUpdateRef.current = now;
-              updateTextTransform(interactionTargetIdRef.current, newTransform);
+              updateTextTransform(pending.id, pending.transform);
+              pendingOverlayTransformRef.current = null;
             }
             rafIdRef.current = null;
           });
@@ -5220,18 +5239,24 @@ export const Preview: React.FC = () => {
           };
         }
 
+        if (interactionTargetIdRef.current) {
+          pendingOverlayTransformRef.current = {
+            type: "shape-clip",
+            id: interactionTargetIdRef.current,
+            transform: newTransform,
+          };
+        }
         if (!rafIdRef.current) {
           rafIdRef.current = requestAnimationFrame(() => {
             const now = performance.now();
+            const pending = pendingOverlayTransformRef.current;
             if (
-              now - lastStoreUpdateRef.current >= STORE_UPDATE_THROTTLE_MS &&
-              interactionTargetIdRef.current
+              pending?.type === "shape-clip" &&
+              now - lastStoreUpdateRef.current >= STORE_UPDATE_THROTTLE_MS
             ) {
               lastStoreUpdateRef.current = now;
-              updateShapeTransform(
-                interactionTargetIdRef.current,
-                newTransform,
-              );
+              updateShapeTransform(pending.id, pending.transform);
+              pendingOverlayTransformRef.current = null;
             }
             rafIdRef.current = null;
           });
@@ -5389,6 +5414,12 @@ export const Preview: React.FC = () => {
   );
 
   const handleMouseUp = useCallback(() => {
+    if (pendingOverlayTransformRef.current) {
+      const pending = pendingOverlayTransformRef.current;
+      if (pending.type === "text-clip") updateTextTransform(pending.id, pending.transform);
+      else updateShapeTransform(pending.id, pending.transform);
+      pendingOverlayTransformRef.current = null;
+    }
     if (pendingTransformRef.current) {
       updateClipTransform(
         pendingTransformRef.current.clipId,
@@ -5413,7 +5444,7 @@ export const Preview: React.FC = () => {
     if (wasInteracting) {
       renderFrameDirectly(playheadPosition);
     }
-  }, [updateClipTransform, renderFrameDirectly, playheadPosition]);
+  }, [updateClipTransform, updateTextTransform, updateShapeTransform, renderFrameDirectly, playheadPosition]);
 
   const handleCropChange = useCallback(
     (crop: { x: number; y: number; width: number; height: number }) => {
@@ -5435,6 +5466,12 @@ export const Preview: React.FC = () => {
   useEffect(() => {
     if (interactionMode !== "none") {
       const handleGlobalMouseUp = () => {
+        if (pendingOverlayTransformRef.current) {
+          const pending = pendingOverlayTransformRef.current;
+          if (pending.type === "text-clip") updateTextTransform(pending.id, pending.transform);
+          else updateShapeTransform(pending.id, pending.transform);
+          pendingOverlayTransformRef.current = null;
+        }
         if (pendingTransformRef.current) {
           updateClipTransform(
             pendingTransformRef.current.clipId,
@@ -5467,6 +5504,8 @@ export const Preview: React.FC = () => {
     renderFrameDirectly,
     playheadPosition,
     updateClipTransform,
+    updateTextTransform,
+    updateShapeTransform,
   ]);
 
   const handleScrubClick = useCallback(
@@ -5761,10 +5800,10 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
                 title={
-                  lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"
+                  lockAspectRatio ? t("unlockAspect") : t("lockAspect")
                 }
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? `🔒 ${t("locked")}` : `🔓 ${t("free")}`}
               </button>
 
               {/* Corner resize handles */}
@@ -5842,10 +5881,10 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
                 title={
-                  lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"
+                  lockAspectRatio ? t("unlockAspect") : t("lockAspect")
                 }
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? `🔒 ${t("locked")}` : `🔓 ${t("free")}`}
               </button>
 
               {/* Corner resize handles */}
@@ -5924,10 +5963,10 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
                 title={
-                  lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"
+                  lockAspectRatio ? t("unlockAspect") : t("lockAspect")
                 }
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? `🔒 ${t("locked")}` : `🔓 ${t("free")}`}
               </button>
 
               {/* Corner resize handles */}
@@ -6011,7 +6050,7 @@ export const Preview: React.FC = () => {
                     aria-hidden="true"
                     className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/70 rounded text-[10px] text-white whitespace-nowrap"
                   >
-                    Click to select
+                    {t("clickToSelect")}
                   </div>
                 </div>
               );
