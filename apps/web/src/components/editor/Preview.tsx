@@ -547,7 +547,7 @@ export const Preview: React.FC = () => {
   const isInteractingRef = useRef<boolean>(false);
   // Throttle store updates during interaction (update at most every 32ms ~30fps)
   const lastStoreUpdateRef = useRef<number>(0);
-  const STORE_UPDATE_THROTTLE_MS = 32;
+  const STORE_UPDATE_THROTTLE_MS = 0;
   // Throttle playhead updates during playback to reduce React re-renders
   const lastPlayheadUpdateRef = useRef<number>(0);
   const PLAYHEAD_UPDATE_THROTTLE_MS = 16;
@@ -5067,13 +5067,19 @@ export const Preview: React.FC = () => {
     (e: React.MouseEvent) => {
       if (interactionMode !== "none") return;
 
-      const clip = findGraphicClipAtPoint(e.clientX, e.clientY);
-      if (clip) {
-        select({ type: "shape-clip", id: clip.id });
+      const graphic = findGraphicClipAtPoint(e.clientX, e.clientY);
+      if (graphic) {
+        select({ type: "shape-clip", id: graphic.id });
+        e.stopPropagation();
+        return;
+      }
+
+      if (clipAtPlayhead) {
+        select({ type: "clip", id: clipAtPlayhead.id });
         e.stopPropagation();
       }
     },
-    [interactionMode, findGraphicClipAtPoint, select],
+    [interactionMode, findGraphicClipAtPoint, select, clipAtPlayhead],
   );
 
   const handleMouseMove = useCallback(
@@ -5730,6 +5736,13 @@ export const Preview: React.FC = () => {
               {/* Selection border */}
               <div className="absolute inset-0 border-2 border-primary pointer-events-none" />
 
+              {/* Frameo direct manipulation surface: drag anywhere inside the selected clip */}
+              <div
+                className="absolute inset-0 pointer-events-auto cursor-move"
+                onMouseDown={handleClipMouseDown}
+                title="Drag anywhere to move"
+              />
+
               {/* Move handle (center) */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-primary/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-primary transition-colors"
@@ -5805,6 +5818,11 @@ export const Preview: React.FC = () => {
             >
               {/* Selection border - cyan for text clips */}
               <div className="absolute inset-0 border-2 border-cyan-500 pointer-events-none" />
+              <div
+                className="absolute inset-0 pointer-events-auto cursor-move"
+                onMouseDown={handleTextClipMouseDown}
+                title="Drag anywhere to move text"
+              />
 
               {/* Move handle (center) */}
               <div
