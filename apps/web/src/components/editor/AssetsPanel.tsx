@@ -426,6 +426,8 @@ export const AssetsPanel: React.FC = () => {
     { value: "graphics", label: t("graphics"), description: language === "es" ? "Formas, fondos, SVG y stickers." : "Shapes, backgrounds, SVG and stickers." },
     { value: "effects", label: t("effects"), description: language === "es" ? "Aplica efectos al clip seleccionado." : "Apply effects to the selected clip." },
     { value: "transitions", label: t("transitions"), description: language === "es" ? "Añade transiciones entre clips." : "Add transitions between clips." },
+    { value: "recipes", label: t("recipes"), description: t("recipesDescription") },
+    { value: "templates", label: t("projectTemplates"), description: t("templatesDescription") },
   ];
   const tabLabel = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.label ?? tab;
   const tabDescription = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.description ?? tab;
