@@ -228,6 +228,8 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
     <div className="relative">
       <div
         ref={laneRef}
+        data-timeline-track-id={track.id}
+        data-timeline-track-type={track.type}
         style={{ height: trackHeight }}
         className={`border-b border-border/50 relative transition-colors ${
           isDragOver
