@@ -129,7 +129,7 @@ const FrameoLogo: React.FC<{ className?: string }> = ({ className = "" }) => (
   </svg>
 );
 
-type ViewMode = "home" | "templates" | "recent";
+type ViewMode = "idea" | "home" | "templates" | "recent";
 
 interface WelcomeScreenProps {
   initialTab?: "templates" | "recent";
@@ -145,15 +145,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   const { navigate } = useRouter();
   const { track } = useAnalytics();
 
-  const [viewMode, setViewMode] = useState<ViewMode>(initialTab ?? "home");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialTab ?? "idea");
   const [hoveredFormat, setHoveredFormat] = useState<string | null>(null);
+  const [projectIdea, setProjectIdea] = useState(() => sessionStorage.getItem("frameo-project-idea") ?? "");
 
   useEditorPreload(true);
 
   const handleCreateProject = useCallback(
     (option: FormatOption) => {
       const preset = SOCIAL_MEDIA_PRESETS[option.preset];
-      const projectName = option.id === "vertical" ? t("verticalProject") : option.id === "square" ? t("squareProject") : t("horizontalProject");
+      const fallbackName = option.id === "vertical" ? t("verticalProject") : option.id === "square" ? t("squareProject") : t("horizontalProject");
+      const projectName = projectIdea.trim() ? projectIdea.trim().slice(0, 72) : fallbackName;
       createNewProject(projectName, {
         width: preset.width,
         height: preset.height,
@@ -168,7 +170,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
       });
       navigate("editor");
     },
-    [createNewProject, navigate, track, t],
+    [createNewProject, navigate, track, t, projectIdea],
   );
 
   const handleTemplateApplied = useCallback(() => {
@@ -198,6 +200,81 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [navigate, viewMode]);
+
+  if (viewMode === "idea") {
+    const quickIdeas = [
+      t("editVideoIdea"),
+      t("socialIdea"),
+      t("montageIdea"),
+      t("animationIdea"),
+    ];
+
+    const continueToFormats = () => {
+      sessionStorage.setItem("frameo-project-idea", projectIdea.trim());
+      setViewMode("home");
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,197,94,0.07),transparent_58%)]" />
+        <div className="absolute top-5 right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary p-1">
+          <Languages size={14} className="mx-2 text-text-muted" />
+          <button onClick={() => setLanguage("es")} className={`px-2 py-1 rounded text-xs ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
+          <button onClick={() => setLanguage("en")} className={`px-2 py-1 rounded text-xs ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
+        </div>
+
+        <div className="relative h-full flex items-center justify-center px-6">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-background-secondary/95 p-8 shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="w-10 h-10 text-primary"><FrameoLogo className="w-full h-full" /></div>
+              <span className="text-lg font-semibold text-text-primary">Frameo</span>
+            </div>
+
+            <div className="text-center mb-7">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary mb-3">{t("ideaTitle")}</h1>
+              <p className="text-sm sm:text-base text-text-muted max-w-xl mx-auto">{t("ideaSubtitle")}</p>
+            </div>
+
+            <textarea
+              autoFocus
+              value={projectIdea}
+              onChange={(e) => setProjectIdea(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") continueToFormats();
+              }}
+              placeholder={t("ideaPlaceholder")}
+              className="w-full min-h-32 resize-none rounded-2xl border border-border bg-background p-4 text-base text-text-primary placeholder:text-text-muted/60 focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {quickIdeas.map((idea) => (
+                <button
+                  key={idea}
+                  onClick={() => setProjectIdea(idea)}
+                  className="rounded-full border border-border bg-background-tertiary px-3 py-1.5 text-xs text-text-secondary transition-colors hover:border-primary/50 hover:text-text-primary"
+                >
+                  {idea}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-8 flex items-center justify-between gap-3">
+              <button
+                onClick={() => { setProjectIdea(""); sessionStorage.removeItem("frameo-project-idea"); setViewMode("home"); }}
+                className="px-4 py-2 text-sm text-text-muted hover:text-text-primary"
+              >
+                {t("skip")}
+              </button>
+              <Button onClick={continueToFormats} className="rounded-xl px-6">
+                {t("continue")}
+                <ArrowRight size={15} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (viewMode === "templates") {
     return (
@@ -273,6 +350,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             <p className="text-xl text-text-secondary mb-8">
               {t("inBrowser")}
             </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2">{t("chooseFormat")}</p>
             <p className="text-base text-text-muted max-w-md">
               {t("pickFormat")}
             </p>
