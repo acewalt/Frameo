@@ -1772,7 +1772,15 @@ export const Preview: React.FC = () => {
       );
 
       let hasRenderedFrame = false;
+      let renderedMediaFrame = false;
       let shouldClearCanvas = true;
+
+      const hasVideoContent = videoTracks.some((track) =>
+        track.clips.some(
+          (clip) =>
+            time >= clip.startTime && time < clip.startTime + clip.duration,
+        ),
+      );
 
       const activeShapeClips = getActiveShapeClips(allShapeClips, time);
       const activeTextClips = getActiveTextClips(allTextClips, time);
@@ -1861,6 +1869,7 @@ export const Preview: React.FC = () => {
               incomingFrame.close();
               blendedFrame.close();
               hasRenderedFrame = true;
+              renderedMediaFrame = true;
             }
           } else if (outgoingFrame) {
             const processed = await applyEffectsToFrame(
@@ -1903,6 +1912,7 @@ export const Preview: React.FC = () => {
             }
             outgoingFrame.close();
             hasRenderedFrame = true;
+            renderedMediaFrame = true;
           } else if (incomingFrame) {
             const processed = await applyEffectsToFrame(
               transitionInfo.clipB.id,
@@ -1944,6 +1954,7 @@ export const Preview: React.FC = () => {
             }
             incomingFrame.close();
             hasRenderedFrame = true;
+            renderedMediaFrame = true;
           }
         } catch (error) {
           console.warn("[Preview] Transition render failed:", error);
@@ -1951,13 +1962,6 @@ export const Preview: React.FC = () => {
       }
 
       if (!hasRenderedFrame) {
-        const hasVideoContent = videoTracks.some((track) =>
-          track.clips.some(
-            (clip) =>
-              time >= clip.startTime && time < clip.startTime + clip.duration,
-          ),
-        );
-
         if (
           shouldClearCanvas &&
           (hasVideoContent ||
@@ -2078,6 +2082,7 @@ export const Preview: React.FC = () => {
                         canvas.height,
                       );
                       hasRenderedFrame = true;
+                      renderedMediaFrame = true;
                     } else {
                       drawFrameWithTransform(
                         ctx,
@@ -2087,6 +2092,7 @@ export const Preview: React.FC = () => {
                         canvas.height,
                       );
                       hasRenderedFrame = true;
+                      renderedMediaFrame = true;
                     }
                   } catch {
                     drawFrameWithTransform(
@@ -2161,6 +2167,10 @@ export const Preview: React.FC = () => {
             time,
           );
         }
+      }
+
+      if (hasVideoContent && !renderedMediaFrame) {
+        return false;
       }
 
       if (hasRenderedFrame && offscreenCanvasRef.current) {
@@ -4372,6 +4382,7 @@ export const Preview: React.FC = () => {
   const lastPlayheadForRenderRef = useRef<number>(playheadPosition);
   const modifiedRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderInFlightRef = useRef<boolean>(false);
+  const interactiveRenderPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (isPlaying) return;
@@ -5343,11 +5354,16 @@ export const Preview: React.FC = () => {
   const renderInteractiveFrame = useCallback(() => {
     if (renderInFlightRef.current) return;
     renderInFlightRef.current = true;
-    renderFrameDirectly(playheadPosition)
-      .catch(() => undefined)
+    const task = renderFrameDirectly(playheadPosition)
+      .catch(() => false)
+      .then(() => undefined)
       .finally(() => {
         renderInFlightRef.current = false;
+        if (interactiveRenderPromiseRef.current === task) {
+          interactiveRenderPromiseRef.current = null;
+        }
       });
+    interactiveRenderPromiseRef.current = task;
   }, [renderFrameDirectly, playheadPosition]);
 
   const handleMouseMove = useCallback(
@@ -5776,9 +5792,13 @@ export const Preview: React.FC = () => {
     interactionStartRef.current = null;
 
     if (wasInteracting) {
-      void renderFrameDirectly(playheadPosition).finally(() => {
-        setLiveTransform(null);
-      });
+      const pending = interactiveRenderPromiseRef.current;
+      void Promise.resolve(pending)
+        .catch(() => undefined)
+        .then(() => renderFrameDirectly(playheadPosition))
+        .finally(() => {
+          setLiveTransform(null);
+        });
     } else {
       setLiveTransform(null);
     }
@@ -5832,9 +5852,13 @@ export const Preview: React.FC = () => {
         interactionTargetIdRef.current = null;
 
         if (wasInteracting) {
-          void renderFrameDirectly(playheadPosition).finally(() => {
-            setLiveTransform(null);
-          });
+          const pending = interactiveRenderPromiseRef.current;
+          void Promise.resolve(pending)
+            .catch(() => undefined)
+            .then(() => renderFrameDirectly(playheadPosition))
+            .finally(() => {
+              setLiveTransform(null);
+            });
         } else {
           setLiveTransform(null);
         }
@@ -5996,8 +6020,6 @@ export const Preview: React.FC = () => {
           isMaximized || isFullscreen ? "p-0" : "p-2 sm:p-4"
         } ${zoomLevel > 1 ? "overflow-auto" : ""}`}
         onPointerMove={interactionMode !== "none" ? handleMouseMove : undefined}
-        onPointerUp={handleMouseUp}
-        onPointerCancel={handleMouseUp}
       >
         <div
           ref={overlayRef}
