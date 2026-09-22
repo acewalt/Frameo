@@ -554,7 +554,7 @@ export const EditorInterface: React.FC = () => {
           </div>
 
           {mobilePanel && (
-            <div className="absolute inset-0 z-50 bg-background flex flex-col shadow-2xl">
+            <div className="absolute inset-0 z-[200] bg-background flex flex-col shadow-2xl">
               <div className="h-11 shrink-0 px-3 border-b border-border bg-background-secondary flex items-center justify-between">
                 <div className="flex items-center gap-2 text-text-primary font-semibold text-xs">
                   {mobilePanel === "assets" ? <Layers3 size={15} /> : <SlidersHorizontal size={15} />}
