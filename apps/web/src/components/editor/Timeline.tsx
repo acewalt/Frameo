@@ -1047,6 +1047,20 @@ export const Timeline: React.FC = () => {
               const draggedTransitionType = e.dataTransfer.getData(
                 "application/x-frameo-transition",
               ) as TransitionType;
+              const draggedTransitionDuration = Number(
+                e.dataTransfer.getData("application/x-frameo-transition-duration") || "0.6",
+              );
+              let draggedTransitionParams: Record<string, unknown> = {};
+              try {
+                const rawTransitionParams = e.dataTransfer.getData(
+                  "application/x-frameo-transition-params",
+                );
+                if (rawTransitionParams) {
+                  draggedTransitionParams = JSON.parse(rawTransitionParams) as Record<string, unknown>;
+                }
+              } catch {
+                draggedTransitionParams = {};
+              }
               if (draggedTransitionType) {
                 const localY =
                   e.clientY -
@@ -1105,8 +1119,13 @@ export const Timeline: React.FC = () => {
                   bestPair.clipA,
                   bestPair.clipB,
                   draggedTransitionType,
-                  0.6,
-                  bridge.getDefaultParams(draggedTransitionType),
+                  Number.isFinite(draggedTransitionDuration) && draggedTransitionDuration > 0
+                    ? draggedTransitionDuration
+                    : 0.6,
+                  {
+                    ...bridge.getDefaultParams(draggedTransitionType),
+                    ...draggedTransitionParams,
+                  },
                 );
 
                 if (!result.success || !result.transitionId) {
