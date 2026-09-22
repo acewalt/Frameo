@@ -1210,6 +1210,9 @@ export const Preview: React.FC = () => {
   useEffect(() => {
     if (!simpleDomPreviewEligible) {
       for (const video of domVideoRefs.current.values()) {
+        // Mute first, then pause. A pending play() promise can otherwise resolve
+        // after the advanced audio graph has already started and create a short echo.
+        video.muted = true;
         video.pause();
       }
       return;
@@ -1229,6 +1232,7 @@ export const Preview: React.FC = () => {
 
     for (const [clipId, video] of domVideoRefs.current.entries()) {
       if (!activeIds.has(clipId)) {
+        video.muted = true;
         video.pause();
         continue;
       }
