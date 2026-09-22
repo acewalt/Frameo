@@ -1016,7 +1016,7 @@ export const AssetsPanel: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
                       <Palette size={12} />
-                      Backgrounds
+                      {language === "es" ? "Fondos" : "Backgrounds"}
                     </h4>
                   </div>
                   <div className="flex gap-1.5 mb-3 flex-wrap">
@@ -1031,7 +1031,7 @@ export const AssetsPanel: React.FC = () => {
                               : "bg-background-tertiary text-text-muted hover:text-text-secondary"
                           }`}
                         >
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {language === "es" ? ({ all: "Todos", solid: "Sólidos", gradient: "Degradados", mesh: "Malla", pattern: "Patrones" } as Record<string,string>)[cat] : cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </button>
                       ),
                     )}
@@ -1064,7 +1064,7 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <h4 className="text-xs font-medium text-text-secondary mb-3">
-                    Shapes
+                    {language === "es" ? "Formas" : "Shapes"}
                   </h4>
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -1132,7 +1132,7 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <h4 className="text-xs font-medium text-text-secondary mb-3">
-                    SVG Import
+                    {language === "es" ? "Importar SVG" : "SVG Import"}
                   </h4>
                   <button
                     onClick={() => {
@@ -1175,7 +1175,7 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <h4 className="text-xs font-medium text-text-secondary mb-3">
-                    Stickers & Emojis
+                    {language === "es" ? "Stickers y emojis" : "Stickers & Emojis"}
                   </h4>
                   <div className="grid grid-cols-4 gap-2">
                     {["😀", "🎉", "❤️", "⭐", "🔥", "👍", "🎬", "🎵"].map(
