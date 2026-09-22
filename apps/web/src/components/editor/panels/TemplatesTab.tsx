@@ -7,8 +7,10 @@ import type {
   TemplateCategory,
 } from "@openreel/core";
 import { TEMPLATE_CATEGORIES } from "@openreel/core";
+import { useI18n } from "../../../i18n";
 
 export const TemplatesTab: React.FC = () => {
+  const { language } = useI18n();
   const getTemplateEngine = useEngineStore((s) => s.getTemplateEngine);
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +55,7 @@ export const TemplatesTab: React.FC = () => {
         useProjectStore.getState().project.timeline.tracks.length > 0;
       if (hasClips) {
         const confirmed = window.confirm(
-          "Applying a template will replace your current project. Continue?",
+          language === "es" ? "Aplicar una plantilla reemplazará el proyecto actual. ¿Continuar?" : "Applying a template will replace your current project. Continue?",
         );
         if (!confirmed) return;
       }
@@ -84,7 +86,7 @@ export const TemplatesTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 text-text-muted text-xs">
-        Loading templates...
+        {language === "es" ? "Cargando plantillas..." : "Loading templates..."}
       </div>
     );
   }
@@ -98,7 +100,7 @@ export const TemplatesTab: React.FC = () => {
         />
         <input
           type="text"
-          placeholder="Search templates..."
+          placeholder={language === "es" ? "Buscar plantillas..." : "Search templates..."}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-8 pr-3 py-2 text-xs bg-background-secondary border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/50"
@@ -114,7 +116,7 @@ export const TemplatesTab: React.FC = () => {
               : "bg-background-tertiary border-border text-text-muted hover:border-primary/50"
           }`}
         >
-          All
+          {language === "es" ? "Todas" : "All"}
         </button>
         {TEMPLATE_CATEGORIES.slice(0, 6).map((cat) => (
           <button
@@ -133,7 +135,7 @@ export const TemplatesTab: React.FC = () => {
 
       {filteredTemplates.length === 0 ? (
         <div className="text-center py-8 text-text-muted text-xs">
-          No templates found
+          {language === "es" ? "No se encontraron plantillas" : "No templates found"}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
