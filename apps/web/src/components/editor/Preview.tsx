@@ -1045,6 +1045,7 @@ export const Preview: React.FC = () => {
       clipIndex: number;
       mediaType: "video" | "image";
       src: string;
+      isActive: boolean;
     }> = [];
 
     timelineTracks.forEach((track, trackIndex) => {
@@ -1056,10 +1057,16 @@ export const Preview: React.FC = () => {
       }
 
       track.clips.forEach((clip, clipIndex) => {
-        if (
-          playheadPosition < clip.startTime ||
-          playheadPosition >= clip.startTime + clip.duration
-        ) {
+        const isActive =
+          playheadPosition >= clip.startTime &&
+          playheadPosition < clip.startTime + clip.duration;
+        const isNearFuture =
+          clip.startTime > playheadPosition &&
+          clip.startTime - playheadPosition <= 2;
+
+        // Keep the next clip mounted shortly before its cut. This primes
+        // metadata/decoder state without decoding the whole project at once.
+        if (!isActive && !isNearFuture) {
           return;
         }
 
@@ -1080,6 +1087,7 @@ export const Preview: React.FC = () => {
           clipIndex,
           mediaType: mediaItem.type,
           src,
+          isActive,
         });
       });
     });
@@ -1154,7 +1162,8 @@ export const Preview: React.FC = () => {
         objectFit: "fill",
         transform: `translate3d(-50%, -50%, 0) rotate(${rotation}deg) scale(${scale.x}, ${scale.y})`,
         transformOrigin: "50% 50%",
-        opacity: baseTransform.opacity ?? 1,
+        opacity: item.isActive ? (baseTransform.opacity ?? 1) : 0,
+        visibility: item.isActive ? "visible" : "hidden",
         zIndex: (timelineTracks.length - trackIndex) * 100 + clipIndex,
         willChange: isPlaying || live ? "transform" : undefined,
         backfaceVisibility: "hidden",
@@ -1180,7 +1189,11 @@ export const Preview: React.FC = () => {
       return;
     }
 
-    const activeIds = new Set(domPreviewItems.map((item) => item.clip.id));
+    const activeIds = new Set(
+      domPreviewItems
+        .filter((item) => item.isActive)
+        .map((item) => item.clip.id),
+    );
     const anySolo = timelineTracks.some(
       (track) =>
         track.type === "video" &&
@@ -1194,7 +1207,9 @@ export const Preview: React.FC = () => {
         continue;
       }
 
-      const item = domPreviewItems.find((candidate) => candidate.clip.id === clipId);
+      const item = domPreviewItems.find(
+        (candidate) => candidate.clip.id === clipId && candidate.isActive,
+      );
       if (!item) continue;
 
       const wanted =
@@ -6648,7 +6663,7 @@ export const Preview: React.FC = () => {
                       if (Number.isFinite(wanted)) {
                         queueDomVideoSeek(item.clip.id, video, wanted, true);
                       }
-                      if (domPlayingRef.current) {
+                      if (domPlayingRef.current && item.isActive) {
                         void video.play().catch(() => undefined);
                       }
                     }}
