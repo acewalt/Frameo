@@ -3,20 +3,20 @@ import {
   Search, Image as ImageIcon, Film, Music, Plus, Upload, Trash2, 
   Square, Circle, Triangle, Star, ArrowRight, Hexagon, FileCode, AlertTriangle, 
   RefreshCw, Palette, LayoutGrid, Grid2x2, List, Video, 
-  Type, Shapes, Wand2, LayoutTemplate
+  Type, Shapes, Wand2
 } from "lucide-react";
 import {
   BACKGROUND_PRESETS,
   generateBackgroundBlob,
   type BackgroundPreset,
 } from "../../services/background-generator";
-import type { ShapeType } from "@openreel/core";
+import type { ShapeType, TransitionType } from "@openreel/core";
+import type { VideoEffectType } from "../../bridges/effects-bridge";
+import { getTransitionBridge } from "../../bridges/transition-bridge";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
 import type { MediaItem } from "@openreel/core";
 import { AspectRatioMatchDialog } from "./dialogs/AspectRatioMatchDialog";
-import { RecipesTab } from "./panels/RecipesTab";
-import { TemplatesTab } from "./panels/TemplatesTab";
 import { toast } from "../../stores/notification-store";
 import { saveFileHandle, saveDirectoryHandle } from "../../services/media-storage";
 import {
@@ -46,15 +46,41 @@ const formatDuration = (seconds: number): string => {
  * Shows thumbnail with metadata below (not overlaid)
  */
 type MediaViewMode = "large" | "small" | "list";
-type AssetsTab = "media" | "text" | "graphics" | "recipes" | "templates";
+type AssetsTab = "media" | "text" | "graphics" | "effects" | "transitions";
 
 const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   media: Video,
   text: Type,
   graphics: Shapes,
-  recipes: Wand2,
-  templates: LayoutTemplate,
+  effects: Wand2,
+  transitions: ArrowRight,
 };
+
+const EFFECT_LIBRARY: ReadonlyArray<{ type: VideoEffectType; en: string; es: string; category: string }> = [
+  { type: "brightness", en: "Brightness", es: "Brillo", category: "Basic" },
+  { type: "contrast", en: "Contrast", es: "Contraste", category: "Basic" },
+  { type: "saturation", en: "Saturation", es: "Saturación", category: "Basic" },
+  { type: "temperature", en: "Temperature", es: "Temperatura", category: "Color" },
+  { type: "tint", en: "Tint", es: "Tinte", category: "Color" },
+  { type: "blur", en: "Blur", es: "Desenfoque", category: "Blur" },
+  { type: "motion-blur", en: "Motion Blur", es: "Desenfoque de movimiento", category: "Blur" },
+  { type: "radial-blur", en: "Radial Blur", es: "Desenfoque radial", category: "Blur" },
+  { type: "sharpen", en: "Sharpen", es: "Enfocar", category: "Creative" },
+  { type: "vignette", en: "Vignette", es: "Viñeta", category: "Creative" },
+  { type: "grain", en: "Film Grain", es: "Grano de película", category: "Creative" },
+  { type: "glow", en: "Glow", es: "Resplandor", category: "Stylize" },
+  { type: "chromatic-aberration", en: "Chromatic Aberration", es: "Aberración cromática", category: "Stylize" },
+];
+
+const TRANSITION_LIBRARY: ReadonlyArray<{ type: TransitionType; en: string; es: string; descriptionEn: string; descriptionEs: string }> = [
+  { type: "crossfade", en: "Crossfade", es: "Fundido cruzado", descriptionEn: "Blend one clip into the next.", descriptionEs: "Mezcla un clip con el siguiente." },
+  { type: "dipToBlack", en: "Dip to Black", es: "Fundido a negro", descriptionEn: "Fade through black.", descriptionEs: "Transición pasando por negro." },
+  { type: "dipToWhite", en: "Dip to White", es: "Fundido a blanco", descriptionEn: "Fade through white.", descriptionEs: "Transición pasando por blanco." },
+  { type: "wipe", en: "Wipe", es: "Barrido", descriptionEn: "Reveal the next clip directionally.", descriptionEs: "Revela el siguiente clip con un barrido." },
+  { type: "slide", en: "Slide", es: "Deslizar", descriptionEn: "Slide the next clip into frame.", descriptionEs: "Desliza el siguiente clip dentro del cuadro." },
+  { type: "push", en: "Push", es: "Empujar", descriptionEn: "Push both clips together.", descriptionEs: "Empuja ambos clips de forma conjunta." },
+  { type: "zoom", en: "Zoom", es: "Zoom", descriptionEn: "Zoom between adjacent clips.", descriptionEs: "Hace zoom entre clips adyacentes." },
+];
 
 
 
@@ -389,13 +415,13 @@ const LoadingIndicator: React.FC<{ message: string }> = ({ message }) => (
 );
 
 export const AssetsPanel: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const ASSETS_TABS: ReadonlyArray<{ value: AssetsTab; label: string; description: string }> = [
-    { value: "media", label: t("media"), description: t("media") },
-    { value: "text", label: t("text"), description: t("text") },
-    { value: "graphics", label: t("graphics"), description: t("graphics") },
-    { value: "recipes", label: t("recipes"), description: t("recipes") },
-    { value: "templates", label: t("projectTemplates"), description: t("projectTemplates") },
+    { value: "media", label: t("media"), description: language === "es" ? "Importa video, audio e imágenes." : "Import footage, audio, and stills." },
+    { value: "text", label: t("text"), description: language === "es" ? "Añade títulos y elementos de texto." : "Add titles and text elements." },
+    { value: "graphics", label: t("graphics"), description: language === "es" ? "Formas, fondos, SVG y stickers." : "Shapes, backgrounds, SVG and stickers." },
+    { value: "effects", label: t("effects"), description: language === "es" ? "Aplica efectos al clip seleccionado." : "Apply effects to the selected clip." },
+    { value: "transitions", label: t("transitions"), description: language === "es" ? "Añade transiciones entre clips." : "Add transitions between clips." },
   ];
   const tabLabel = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.label ?? tab;
   const tabDescription = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.description ?? tab;
@@ -437,7 +463,7 @@ export const AssetsPanel: React.FC = () => {
 
 
   // UI store
-  const { select, isSelected, startDrag } = useUIStore();
+  const { select, isSelected, startDrag, getSelectedClipIds } = useUIStore();
 
   // Count missing assets
   const missingAssetsCount = mediaItems.filter(
@@ -735,6 +761,63 @@ export const AssetsPanel: React.FC = () => {
   );
 
   // Open KieAI dialog for an image asset
+
+  const getSelectedTimelineClipId = useCallback((): string | null => {
+    const selectedId = getSelectedClipIds()[0];
+    if (!selectedId) return null;
+    return project.timeline.tracks.some((track) => track.clips.some((clip) => clip.id === selectedId))
+      ? selectedId
+      : null;
+  }, [getSelectedClipIds, project.timeline.tracks]);
+
+  const applyEffectFromLibrary = useCallback((type: VideoEffectType) => {
+    const clipId = getSelectedTimelineClipId();
+    if (!clipId) {
+      toast.warning(
+        language === "es" ? "Selecciona un clip" : "Select a clip",
+        language === "es" ? "Selecciona un video o imagen en la línea de tiempo antes de aplicar un efecto." : "Select a video or image on the timeline before applying an effect.",
+      );
+      return;
+    }
+    const effect = useProjectStore.getState().addVideoEffect(clipId, type);
+    if (effect) toast.success(language === "es" ? "Efecto aplicado" : "Effect applied");
+  }, [getSelectedTimelineClipId, language]);
+
+  const findTransitionPair = useCallback(() => {
+    const clipId = getSelectedTimelineClipId();
+    if (!clipId) return null;
+    for (const track of project.timeline.tracks) {
+      const clips = [...track.clips].sort((a, b) => a.startTime - b.startTime);
+      const index = clips.findIndex((clip) => clip.id === clipId);
+      if (index < 0) continue;
+      if (index < clips.length - 1) return { clipA: clips[index], clipB: clips[index + 1] };
+      if (index > 0) return { clipA: clips[index - 1], clipB: clips[index] };
+    }
+    return null;
+  }, [getSelectedTimelineClipId, project.timeline.tracks]);
+
+  const applyTransitionFromLibrary = useCallback((type: TransitionType) => {
+    const pair = findTransitionPair();
+    if (!pair) {
+      toast.warning(
+        language === "es" ? "Se necesitan dos clips" : "Two clips required",
+        language === "es" ? "Selecciona un clip que tenga otro clip adyacente en la misma pista." : "Select a clip with an adjacent clip on the same track.",
+      );
+      return;
+    }
+    const bridge = getTransitionBridge();
+    if (!bridge.isInitialized()) bridge.initialize();
+    const result = bridge.createTransition(pair.clipA, pair.clipB, type, 0.6, bridge.getDefaultParams(type));
+    if (!result.success || !result.transitionId) {
+      toast.error(language === "es" ? "No se pudo crear la transición" : "Transition failed", result.error || "");
+      return;
+    }
+    const transition = bridge.getTransition(result.transitionId);
+    if (transition) {
+      useProjectStore.getState().addClipTransition(transition);
+      toast.success(language === "es" ? "Transición aplicada" : "Transition applied");
+    }
+  }, [findTransitionPair, language]);
 
   const renderSectionContent = (tab: AssetsTab): React.ReactNode => {
     switch (tab) {
@@ -1194,16 +1277,76 @@ export const AssetsPanel: React.FC = () => {
             </ScrollArea>
           </div>
         );
-      case "recipes":
+      case "effects":
         return (
-          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary content-area-fix">
-            <RecipesTab />
+          <div className="min-h-0 flex-1 border-t border-border/70">
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="px-4 py-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {EFFECT_LIBRARY.map((effect) => (
+                    <button
+                      key={effect.type}
+                      onClick={() => applyEffectFromLibrary(effect.type)}
+                      className="group overflow-hidden rounded-lg border border-border bg-background-tertiary text-left transition-all hover:border-primary/60 hover:bg-primary/5"
+                    >
+                      <div className="relative h-20 overflow-hidden bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,.16),transparent_35%),linear-gradient(135deg,rgba(34,197,94,.18),rgba(255,255,255,.03))]">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Wand2 size={24} className="text-text-muted transition-colors group-hover:text-primary" />
+                        </div>
+                        <span className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-0.5 text-[8px] uppercase text-white/80">
+                          {effect.category}
+                        </span>
+                      </div>
+                      <div className="px-2 py-2">
+                        <p className="truncate text-[10px] font-semibold text-text-primary">
+                          {language === "es" ? effect.es : effect.en}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </ScrollArea>
           </div>
         );
-      case "templates":
+      case "transitions":
         return (
-          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary content-area-fix">
-            <TemplatesTab />
+          <div className="min-h-0 flex-1 border-t border-border/70">
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="px-4 py-4">
+                <p className="mb-3 text-[10px] text-text-muted">
+                  {language === "es"
+                    ? "Haz clic para aplicarla al clip seleccionado o arrástrala hasta un corte en la línea de tiempo."
+                    : "Click to apply to the selected clip, or drag it onto a cut in the timeline."}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {TRANSITION_LIBRARY.map((transition) => (
+                    <button
+                      key={transition.type}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = "copy";
+                        event.dataTransfer.setData("application/x-frameo-transition", transition.type);
+                      }}
+                      onClick={() => applyTransitionFromLibrary(transition.type)}
+                      className="group rounded-lg border border-border bg-background-tertiary p-2 text-left transition-all hover:border-primary/60 hover:bg-primary/5"
+                    >
+                      <div className="relative mb-2 h-12 overflow-hidden rounded bg-background">
+                        <div className="absolute inset-y-0 left-0 w-1/2 bg-primary/25 transition-transform duration-300 group-hover:-translate-x-2" />
+                        <div className="absolute inset-y-0 right-0 w-1/2 bg-white/10 transition-transform duration-300 group-hover:translate-x-2" />
+                        <ArrowRight size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" />
+                      </div>
+                      <p className="text-[10px] font-semibold text-text-primary">
+                        {language === "es" ? transition.es : transition.en}
+                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-[9px] text-text-muted">
+                        {language === "es" ? transition.descriptionEs : transition.descriptionEn}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </ScrollArea>
           </div>
         );
       default:
