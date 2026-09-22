@@ -4522,7 +4522,7 @@ export const Preview: React.FC = () => {
     if (mediaItem.type !== "video" && mediaItem.type !== "image") return false;
     if (clipNeedsFrameProcessing(clip.id)) return false;
     if (getTransitionAtTime(playheadPosition, timelineTracks)) return false;
-    if (clip.crop) return false;
+    if (clip.transform?.crop) return false;
     if (clip.keyframes && clip.keyframes.length > 0) return false;
     if (clip.emphasisAnimation && clip.emphasisAnimation.type !== "none") return false;
     if (clip.stabilization?.enabled) return false;
