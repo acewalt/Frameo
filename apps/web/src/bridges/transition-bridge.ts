@@ -360,6 +360,13 @@ export class TransitionBridge {
         hasCustomParams: false,
       },
       {
+        type: "dissolve",
+        name: "Dissolve",
+        description: "Linear dissolve between adjacent clips",
+        hasDirection: false,
+        hasCustomParams: false,
+      },
+      {
         type: "dipToBlack",
         name: "Dip to Black",
         description: "Fade through black",
@@ -400,6 +407,20 @@ export class TransitionBridge {
         description: "Push outgoing clip with incoming",
         hasDirection: true,
         hasCustomParams: false,
+      },
+      {
+        type: "blur",
+        name: "Blur Dissolve",
+        description: "Blur both clips through the transition",
+        hasDirection: false,
+        hasCustomParams: true,
+      },
+      {
+        type: "iris",
+        name: "Iris",
+        description: "Reveal the next clip through a shape",
+        hasDirection: false,
+        hasCustomParams: true,
       },
     ];
   }
