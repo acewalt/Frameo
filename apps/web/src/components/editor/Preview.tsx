@@ -776,6 +776,7 @@ export const Preview: React.FC = () => {
   const domVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const domVideoWantedTimeRef = useRef<Map<string, number>>(new Map());
   const domVideoSeekRafRef = useRef<Map<string, number>>(new Map());
+  const domOverlayCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
   const getDomMediaUrl = useCallback(
     (mediaId: string): string | null => {
@@ -882,7 +883,9 @@ export const Preview: React.FC = () => {
   const settings = project.settings;
 
   const simpleDomPreviewEligible = useMemo(() => {
-    if (allTextClips.length > 0 || allShapeClips.length > 0 || allSubtitles.length > 0) {
+    // Keep basic text / graphics on lightweight per-track overlay canvases.
+    // Only subtitles and advanced media processing require the legacy compositor.
+    if (allSubtitles.length > 0) {
       return false;
     }
 
@@ -925,8 +928,6 @@ export const Preview: React.FC = () => {
     );
   }, [
     timelineTracks,
-    allTextClips,
-    allShapeClips,
     allSubtitles,
   ]);
 
@@ -1034,6 +1035,31 @@ export const Preview: React.FC = () => {
   useEffect(() => {
     domPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    if (!simpleDomPreviewEligible) return;
+
+    // The visual DOM preview owns HTMLMediaElement audio. Stop every legacy
+    // WebAudio/native-preview source before any DOM video is allowed to play.
+    // This prevents the temporary doubled/echoed audio heard when switching
+    // compositor modes after adding/removing overlays.
+    nativePlaybackActiveRef.current = false;
+    if (audioSourceRef.current) {
+      try {
+        audioSourceRef.current.stop();
+      } catch {
+        // Already stopped.
+      }
+      try {
+        audioSourceRef.current.disconnect();
+      } catch {
+        // Already disconnected.
+      }
+      audioSourceRef.current = null;
+    }
+    audioGraphRef.current?.stopScheduler();
+    audioGraphRef.current?.stopAllClips();
+  }, [simpleDomPreviewEligible]);
 
   const domPreviewItems = useMemo(() => {
     if (!simpleDomPreviewEligible) return [];
@@ -1305,7 +1331,72 @@ export const Preview: React.FC = () => {
     setPlayheadPosition,
   ]);
 
-  const motionPathClip = React.useMemo(() => {
+  useEffect(() => {
+    if (!simpleDomPreviewEligible) return;
+
+    for (const track of timelineTracks) {
+      if (track.type !== "text" && track.type !== "graphics") continue;
+
+      const canvas = domOverlayCanvasRefs.current.get(track.id);
+      if (!canvas) continue;
+
+      if (canvas.width !== settings.width) canvas.width = settings.width;
+      if (canvas.height !== settings.height) canvas.height = settings.height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (track.hidden) continue;
+
+      if (track.type === "text") {
+        for (const textClip of allTextClips) {
+          if (
+            textClip.trackId !== track.id ||
+            playheadPosition < textClip.startTime ||
+            playheadPosition >= textClip.startTime + textClip.duration
+          ) {
+            continue;
+          }
+          renderTextClipToCanvas(
+            ctx,
+            textClip,
+            settings.width,
+            settings.height,
+            playheadPosition,
+          );
+        }
+      } else {
+        for (const shapeClip of allShapeClips) {
+          if (
+            shapeClip.trackId !== track.id ||
+            playheadPosition < shapeClip.startTime ||
+            playheadPosition >= shapeClip.startTime + shapeClip.duration
+          ) {
+            continue;
+          }
+          renderShapeClipToCanvas(
+            ctx,
+            shapeClip,
+            settings.width,
+            settings.height,
+            playheadPosition,
+          );
+        }
+      }
+    }
+  }, [
+    simpleDomPreviewEligible,
+    timelineTracks,
+    allTextClips,
+    allShapeClips,
+    playheadPosition,
+    settings.width,
+    settings.height,
+    project.modifiedAt,
+  ]);
+
+    const motionPathClip = React.useMemo(() => {
     if (!motionPathMode || !motionPathClipId) return null;
     for (const track of project.timeline.tracks) {
       const clip = track.clips.find((c) => c.id === motionPathClipId);
@@ -6651,6 +6742,7 @@ export const Preview: React.FC = () => {
                       }
                     }}
                     src={item.src}
+                    muted={false}
                     playsInline
                     preload="auto"
                     draggable={false}
@@ -6679,6 +6771,34 @@ export const Preview: React.FC = () => {
                   />
                 ),
               )}
+
+              {timelineTracks.map((track, trackIndex) => {
+                if (
+                  track.hidden ||
+                  (track.type !== "text" && track.type !== "graphics")
+                ) {
+                  return null;
+                }
+
+                return (
+                  <canvas
+                    key={`dom-overlay-${track.id}`}
+                    ref={(element) => {
+                      if (element) {
+                        domOverlayCanvasRefs.current.set(track.id, element);
+                      } else {
+                        domOverlayCanvasRefs.current.delete(track.id);
+                      }
+                    }}
+                    width={settings.width}
+                    height={settings.height}
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    style={{
+                      zIndex: (timelineTracks.length - trackIndex) * 100 + 50,
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
 
