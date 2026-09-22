@@ -5864,10 +5864,10 @@ export const Preview: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">
-                      Exporting Video
+                      {language === "es" ? "Exportando video" : "Exporting Video"}
                     </h3>
                     <p className="text-xs text-text-muted">
-                      {exportState.phase || "Preparing..."}
+                      {exportState.phase || (language === "es" ? "Preparando..." : "Preparing...")}
                     </p>
                   </div>
                 </div>
@@ -5875,7 +5875,7 @@ export const Preview: React.FC = () => {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-text-secondary">
-                      Export Progress
+                      {language === "es" ? "Progreso de exportación" : "Export Progress"}
                     </span>
                     <span className="text-[10px] text-text-muted font-mono">
                       {Math.round(exportState.progress)}%
@@ -5890,7 +5890,7 @@ export const Preview: React.FC = () => {
                 </div>
 
                 <p className="text-[10px] text-text-muted text-center">
-                  Please wait while your video is being exported...
+                  {language === "es" ? "Espera mientras se exporta el video..." : "Please wait while your video is being exported..."}
                 </p>
               </div>
             </div>
