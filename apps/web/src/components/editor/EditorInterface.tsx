@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import { Toolbar } from "./Toolbar";
 import { AssetsPanel } from "./AssetsPanel";
+import { UtilityRail } from "./UtilityRail";
 import { Preview } from "./Preview";
 import { InspectorPanel } from "./InspectorPanel";
 import { Timeline } from "./Timeline";
@@ -48,6 +49,7 @@ const MAX_INSPECTOR_WIDTH = 520;
 const MIN_PREVIEW_WIDTH = 420;
 const SIDE_RESIZE_HANDLE_WIDTH = 6;
 const HORIZONTAL_RESIZE_HANDLE_HEIGHT = 4;
+const UTILITY_RAIL_WIDTH = 44;
 
 type ResizeTarget = "timeline" | "assets" | "inspector";
 
@@ -314,6 +316,7 @@ export const EditorInterface: React.FC = () => {
         keyframePanelRef.current?.getBoundingClientRect().width ?? 0;
       const maxResizableWidth =
         workspaceRect.width -
+        UTILITY_RAIL_WIDTH -
         keyframeWidth -
         MIN_PREVIEW_WIDTH -
         SIDE_RESIZE_HANDLE_WIDTH * 2;
@@ -412,6 +415,7 @@ export const EditorInterface: React.FC = () => {
         keyframePanelRef.current?.getBoundingClientRect().width ?? 0;
       const maxResizableWidth =
         workspaceRect.width -
+        UTILITY_RAIL_WIDTH -
         keyframeWidth -
         MIN_PREVIEW_WIDTH -
         SIDE_RESIZE_HANDLE_WIDTH * 2;
@@ -494,7 +498,9 @@ export const EditorInterface: React.FC = () => {
       <Toolbar />
 
       <div ref={editorBodyRef} className="min-h-0 flex-1 flex flex-col overflow-hidden">
-        <div ref={workspaceRef} className="min-h-0 flex-1 flex overflow-hidden">
+        <div ref={workspaceRef} className="relative min-h-0 flex-1 flex overflow-hidden">
+          <UtilityRail />
+
           <div
             className="h-full shrink-0 min-w-0 overflow-hidden"
             style={{ width: assetsWidth }}
