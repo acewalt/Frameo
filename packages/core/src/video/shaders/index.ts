@@ -206,9 +206,11 @@ export function createTransformMatrix(
   const normalizedX = (position.x / canvasWidth) * 2;
   const normalizedY = (position.y / canvasHeight) * 2;
 
-  // Pre-compute trig values
-  const cos = Math.cos(rotation);
-  const sin = Math.sin(rotation);
+  // Transform.rotation uses degrees everywhere else in Frameo/Canvas2D.
+  // Convert here so WebGPU playback matches the paused preview exactly.
+  const rotationRadians = (rotation * Math.PI) / 180;
+  const cos = Math.cos(rotationRadians);
+  const sin = Math.sin(rotationRadians);
 
   // Anchor offset in normalized coordinates
   const anchorOffsetX = (anchor.x - 0.5) * 2;
