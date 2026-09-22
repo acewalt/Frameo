@@ -184,19 +184,19 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
               handleStyleChange({
                 fill: {
                   ...style.fill,
-                  type: style.fill?.type || "solid",
+                  type: style.fill?.type === "none" ? "solid" : "none",
                   color: style.fill?.color || "#3b82f6",
-                  opacity: (style.fill?.opacity || 0) > 0 ? 0 : 1,
+                  opacity: style.fill?.opacity ?? 1,
                 },
               })
             }
             className={`rounded px-2 py-0.5 text-[9px] border ${
-              (style.fill?.opacity || 0) > 0
+              style.fill?.type !== "none"
                 ? "border-primary bg-primary/15 text-primary"
                 : "border-border text-text-muted"
             }`}
           >
-            {(style.fill?.opacity || 0) > 0
+            {style.fill?.type !== "none"
               ? (language === "es" ? "Activo" : "On")
               : (language === "es" ? "Desactivado" : "Off")}
           </button>
