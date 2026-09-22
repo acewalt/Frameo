@@ -25,7 +25,6 @@ interface TrackLaneProps {
   selectedClipIds: string[];
   textClips: TextClip[];
   shapeClips: GraphicClipUnion[];
-  trackHeights: Map<string, number>;
   timelineRef: React.RefObject<HTMLDivElement>;
   onSelectClip: (clipId: string, addToSelection: boolean) => void;
   onDropMedia: (trackId: string, mediaId: string, startTime: number) => void;
@@ -67,7 +66,6 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
   selectedClipIds,
   textClips,
   shapeClips,
-  trackHeights,
   timelineRef,
   onSelectClip,
   onDropMedia,
