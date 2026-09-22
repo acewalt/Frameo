@@ -372,6 +372,19 @@ const MediaThumbnail: React.FC<{
         {/* Hover overlay with actions */}
         {isHovered && hoverOverlay}
 
+        {/* Touch action: hover does not exist on phones, keep Add visible. */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToTimeline();
+          }}
+          className="sm:hidden absolute left-1.5 bottom-1.5 w-8 h-8 rounded-full bg-primary text-white grid place-items-center shadow-lg active:scale-95 transition-transform"
+          title="Add to timeline"
+          aria-label="Add to timeline"
+        >
+          <Plus size={16} />
+        </button>
+
         {/* Selection indicator */}
         {isSelected && (
           <div className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_#22c55e]" />
@@ -880,7 +893,7 @@ export const AssetsPanel: React.FC = () => {
       case "media":
         return (
           <div className="flex min-h-0 flex-1 flex-col border-t border-border/70">
-            <div className="px-4 pt-3 pb-3 flex items-center gap-2">
+            <div className="px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2.5 sm:pb-3 flex items-center gap-2">
               <div className="relative flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10" />
                 <Input
@@ -947,7 +960,7 @@ export const AssetsPanel: React.FC = () => {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
             >
-              <div className="px-4 pb-4 relative">
+              <div className="px-3 sm:px-4 pb-4 relative">
                 {filteredItems.length === 0 ? (
                   <EmptyState onImport={triggerFileInput} />
                 ) : (
@@ -1496,10 +1509,10 @@ export const AssetsPanel: React.FC = () => {
   return (
     <div
       data-tour="assets"
-      className="w-full min-w-0 bg-background-secondary border-r border-border flex h-full relative"
+      className="w-full min-w-0 bg-background-secondary border-r border-border flex flex-col sm:flex-row h-full relative"
     >
       {/* Left Sidebar / Activity Bar */}
-      <div className="w-[76px] shrink-0 flex flex-col items-center py-3 gap-1.5 border-r border-border bg-background z-10 overflow-y-auto">
+      <div className="w-full h-[62px] sm:w-[76px] sm:h-auto shrink-0 flex flex-row sm:flex-col items-center px-2 sm:px-0 py-1.5 sm:py-3 gap-1 sm:gap-1.5 border-b sm:border-b-0 sm:border-r border-border bg-background z-10 overflow-x-auto sm:overflow-x-hidden sm:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {ASSETS_TABS.map((tab) => {
           const Icon = TAB_ICONS[tab.value];
           const isActive = activeTab === tab.value;
@@ -1508,18 +1521,18 @@ export const AssetsPanel: React.FC = () => {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               title={tab.description}
-              className={`relative flex w-[66px] min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 transition-all group ${
+              className={`relative flex min-w-[62px] h-[50px] sm:w-[66px] sm:min-w-[66px] sm:h-auto sm:min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 sm:py-2 transition-all group ${
                 isActive
                   ? "bg-primary/15 text-primary"
                   : "text-text-muted hover:bg-background-tertiary hover:text-text-primary"
               }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.4 : 1.9} />
-              <span className="max-w-full truncate text-[9px] font-medium leading-none">
+              <Icon size={18} className="sm:w-5 sm:h-5" strokeWidth={isActive ? 2.4 : 1.9} />
+              <span className="max-w-full truncate text-[8px] sm:text-[9px] font-medium leading-none">
                 {tab.label}
               </span>
               {isActive && (
-                <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-primary rounded-r-full" />
+                <div className="absolute bottom-0 left-2 right-2 h-[3px] bg-primary rounded-t-full sm:left-0 sm:right-auto sm:top-2 sm:bottom-2 sm:w-[3px] sm:h-auto sm:rounded-r-full sm:rounded-t-none" />
               )}
             </button>
           );
@@ -1534,7 +1547,7 @@ export const AssetsPanel: React.FC = () => {
         )}
         
         {/* Panel Header */}
-        <div className="px-5 py-4 flex items-center justify-between border-b border-border/40 shrink-0">
+        <div className="px-3 sm:px-5 py-2.5 sm:py-4 flex items-center justify-between border-b border-border/40 shrink-0">
           <div>
             <h2 className="font-bold text-sm text-text-primary tracking-tight">
               {tabLabel(activeTab)}
