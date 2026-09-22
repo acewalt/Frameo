@@ -81,6 +81,9 @@ import {
 // Initialize engines as singletons
 const chromaKeyEngine = new ChromaKeyEngine({ width: 1920, height: 1080 });
 
+// Frameo keeps the editing workflow local and does not expose AI-assisted tools.
+const FRAMEO_AI_TOOLS_ENABLED = false;
+
 const Section: React.FC<{
   title: string;
   defaultOpen?: boolean;
@@ -1017,7 +1020,7 @@ export const InspectorPanel: React.FC = () => {
               </Section>
             )}
 
-            {clipType === "video" && (
+            {FRAMEO_AI_TOOLS_ENABLED && clipType === "video" && (
               <Section title={language === "es" ? "Subtítulos automáticos" : "Auto Captions"} sectionId="auto-captions" defaultOpen={false}>
                 <div className="space-y-3">
                   <div>
@@ -1117,13 +1120,13 @@ export const InspectorPanel: React.FC = () => {
               </Section>
             )}
 
-            {clipType === "video" && (
+            {FRAMEO_AI_TOOLS_ENABLED && clipType === "video" && (
               <Section title={language === "es" ? "Quitar fondo" : "Background Removal"} sectionId="background-removal" defaultOpen={false}>
                 <BackgroundRemovalSection clipId={clipId} />
               </Section>
             )}
 
-            {clipType === "video" && (
+            {FRAMEO_AI_TOOLS_ENABLED && clipType === "video" && (
               <Section title={language === "es" ? "Reencuadre automático" : "Auto Reframe"} sectionId="auto-reframe" defaultOpen={false}>
                 <AutoReframeSection clipId={clipId} />
               </Section>
@@ -1613,7 +1616,7 @@ export const InspectorPanel: React.FC = () => {
               </Section>
             )}
 
-            {showTextSection && (
+            {FRAMEO_AI_TOOLS_ENABLED && showTextSection && (
               <Section
                 title={language === "es" ? "Texto detrás del sujeto" : "Text Behind Subject"}
                 sectionId="text-behind-subject"
@@ -1644,7 +1647,7 @@ export const InspectorPanel: React.FC = () => {
                   <span className="text-xs font-bold">{language === "es" ? "Acciones rápidas" : "Quick Actions"}</span>
                 </div>
                 <div className="space-y-2">
-                  {showVideoControls && (
+                  {FRAMEO_AI_TOOLS_ENABLED && showVideoControls && (
                     <button
                       onClick={handleRemoveBackground}
                       disabled={isApplyingSelectedClipEffect}
