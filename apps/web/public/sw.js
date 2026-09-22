@@ -6,8 +6,8 @@
  *
  * Requirements: 35.1, 35.2, 35.4
  * - 35.1: Cache all application assets on first load for offline use
- * - 35.2: Function fully for all non-AI features when offline
- * - 35.4: Inform user that AI requires internet connectivity
+ * - 35.2: Keep local editing functionality available offline
+ * - 35.4: Keep remote services network-only
  */
 
 const CACHE_NAME = "frameo-v1";
@@ -48,7 +48,7 @@ const NO_CACHE_PATTERNS = [/\/api\//];
 function shouldCache(url) {
   const urlString = url.toString();
 
-  // Never cache AI-related requests
+  // Never cache API/remote service requests
   if (NO_CACHE_PATTERNS.some((pattern) => pattern.test(urlString))) {
     return false;
   }
@@ -132,22 +132,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Handle API requests as network-only
+  // Handle remote/API requests as network-only.
   if (NO_CACHE_PATTERNS.some((pattern) => pattern.test(url.toString()))) {
     event.respondWith(
-      fetch(request).catch(() => {
-        // Return a generic offline response
-          message: "This online service is unavailable while offline.",
-          }),
-          {
-            status: 503,
-            statusText: "Service Unavailable",
-            headers: {
-              "Content-Type": "application/json",
+      fetch(request).catch(
+        () =>
+          new Response(
+            JSON.stringify({
+              message: "This online service is unavailable while offline.",
+            }),
+            {
+              status: 503,
+              statusText: "Service Unavailable",
+              headers: {
+                "Content-Type": "application/json",
+              },
             },
-          }
-        );
-      })
+          ),
+      ),
     );
     return;
   }
@@ -171,7 +173,7 @@ self.addEventListener("fetch", (event) => {
               return cachedResponse;
             }
             // Fall back to index.html for SPA routing
-            return caches.match("/index.html");
+            return caches.match(`${BASE_PATH}index.html`);
           });
         })
     );
