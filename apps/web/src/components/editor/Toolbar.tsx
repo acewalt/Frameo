@@ -717,9 +717,7 @@ export const Toolbar: React.FC = () => {
                 : "text-text-muted group-hover:text-text-secondary"
             }`}
           >
-            {hasSelectedClip
-              ? "{t("searchSelected")}"
-              : "{t("searchTools")}"}
+            {hasSelectedClip ? t("searchSelected") : t("searchTools")}
           </span>
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-background-tertiary">
             <Command size={10} className="text-text-muted" />
