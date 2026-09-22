@@ -955,7 +955,7 @@ export const AssetsPanel: React.FC = () => {
             )}
 
             <ScrollArea
-              className={`min-h-0 flex-1 ${isDragOver ? "bg-primary/5" : ""}`}
+              className={`h-full min-h-0 flex-1 touch-pan-y ${isDragOver ? "bg-primary/5" : ""}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -1023,9 +1023,9 @@ export const AssetsPanel: React.FC = () => {
         );
       case "graphics":
         return (
-          <div className="min-h-0 flex-1 border-t border-border/70">
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-4 py-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border/70">
+            <ScrollArea className="h-full min-h-0 flex-1 touch-pan-y">
+              <div className="px-3 sm:px-4 py-3 sm:py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
@@ -1241,9 +1241,9 @@ export const AssetsPanel: React.FC = () => {
         );
       case "text":
         return (
-          <div className="min-h-0 flex-1 border-t border-border/70">
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-4 py-4 space-y-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border/70">
+            <ScrollArea className="h-full min-h-0 flex-1 touch-pan-y">
+              <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={async () => {
                     const state = useProjectStore.getState();
@@ -1354,9 +1354,9 @@ export const AssetsPanel: React.FC = () => {
         );
       case "effects":
         return (
-          <div className="min-h-0 flex-1 border-t border-border/70">
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-4 py-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border/70">
+            <ScrollArea className="h-full min-h-0 flex-1 touch-pan-y">
+              <div className="px-3 sm:px-4 py-3 sm:py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="relative mb-3">
                   <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input
@@ -1427,9 +1427,9 @@ export const AssetsPanel: React.FC = () => {
         );
       case "transitions":
         return (
-          <div className="min-h-0 flex-1 border-t border-border/70">
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="px-4 py-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border/70">
+            <ScrollArea className="h-full min-h-0 flex-1 touch-pan-y">
+              <div className="px-3 sm:px-4 py-3 sm:py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="relative mb-3">
                   <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input
@@ -1512,7 +1512,7 @@ export const AssetsPanel: React.FC = () => {
       className="w-full min-w-0 bg-background-secondary border-r border-border flex flex-col sm:flex-row h-full relative"
     >
       {/* Left Sidebar / Activity Bar */}
-      <div className="w-full h-[62px] sm:w-[76px] sm:h-auto shrink-0 flex flex-row sm:flex-col items-center px-2 sm:px-0 py-1.5 sm:py-3 gap-1 sm:gap-1.5 border-b sm:border-b-0 sm:border-r border-border bg-background z-10 overflow-x-auto sm:overflow-x-hidden sm:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="w-full h-[62px] sm:w-[76px] sm:h-auto shrink-0 flex flex-row sm:flex-col items-center px-2 sm:px-0 py-1.5 sm:py-3 gap-1 sm:gap-1.5 border-b sm:border-b-0 sm:border-r border-border bg-background z-20 overflow-x-auto sm:overflow-x-hidden sm:overflow-y-auto touch-pan-x sm:touch-pan-y overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]">
         {ASSETS_TABS.map((tab) => {
           const Icon = TAB_ICONS[tab.value];
           const isActive = activeTab === tab.value;
@@ -1540,7 +1540,7 @@ export const AssetsPanel: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full bg-background-secondary relative">
+      <div className="flex-1 min-h-0 flex flex-col min-w-0 bg-background-secondary relative">
         {/* Loading overlay */}
         {isImporting && (
           <LoadingIndicator message={importProgress || t("importingMedia")} />
@@ -1577,7 +1577,7 @@ export const AssetsPanel: React.FC = () => {
         />
 
         {/* Dynamic Section Content */}
-        <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden touch-pan-y">
           {renderSectionContent(activeTab)}
         </div>
       </div>
