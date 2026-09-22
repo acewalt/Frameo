@@ -364,10 +364,14 @@ export class ActionExecutor {
           solo: false,
         };
 
+        // Frameo uses top-to-bottom visual stacking: lower array index
+        // means a higher layer in the timeline/preview. New tracks therefore
+        // default to position 0 so newly added media/text/graphics appear above
+        // existing content instead of being hidden underneath it.
         const position =
           params.position !== undefined
             ? params.position
-            : timeline.tracks.length;
+            : 0;
 
         timeline.tracks = [
           ...timeline.tracks.slice(0, position),
