@@ -31,6 +31,9 @@ import { useUIStore } from "../../stores/ui-store";
 import { toast } from "../../stores/notification-store";
 import { useEngineStore } from "../../stores/engine-store";
 import { getPlaybackBridge } from "../../bridges/playback-bridge";
+import { getTransitionBridge } from "../../bridges/transition-bridge";
+import type { TransitionType } from "@openreel/core";
+import { useI18n } from "../../i18n";
 import {
   IconButton,
   Popover,
@@ -54,6 +57,7 @@ import {
 } from "./timeline/index";
 
 export const Timeline: React.FC = () => {
+  const { language } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const tracksRef = useRef<HTMLDivElement>(null);
 
@@ -807,7 +811,7 @@ export const Timeline: React.FC = () => {
               <div className="p-2 max-h-60 overflow-y-auto">
                 {tracks.length === 0 ? (
                   <p className="text-xs text-text-muted text-center py-6">
-                    No tracks yet
+                    {language === "es" ? "Aún no hay pistas" : "No tracks yet"}
                   </p>
                 ) : (
                   <div className="space-y-0.5">
@@ -833,7 +837,7 @@ export const Timeline: React.FC = () => {
                               }
                               disabled={index === 0}
                               className="p-1.5 rounded-md hover:bg-background-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                              title="Move up"
+                              title={language === "es" ? "Mover arriba" : "Move up"}
                             >
                               <ChevronUp size={12} />
                             </button>
@@ -844,7 +848,7 @@ export const Timeline: React.FC = () => {
                               }
                               disabled={index === tracks.length - 1}
                               className="p-1.5 rounded-md hover:bg-background-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                              title="Move down"
+                              title={language === "es" ? "Mover abajo" : "Move down"}
                             >
                               <ChevronDown size={12} />
                             </button>
@@ -867,7 +871,7 @@ export const Timeline: React.FC = () => {
                 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
                 : "hover:bg-background-elevated text-text-muted hover:text-text-secondary"
             }`}
-            title={snapSettings.enabled ? "Disable snapping" : "Enable snapping"}
+            title={snapSettings.enabled ? (language === "es" ? "Desactivar magnetismo" : "Disable snapping") : (language === "es" ? "Activar magnetismo" : "Enable snapping")}
           >
             <Magnet size={14} />
             <span className="text-[10px] font-medium tracking-wide">SNAP</span>
@@ -887,7 +891,7 @@ export const Timeline: React.FC = () => {
                   ? "text-primary bg-primary/10"
                   : "text-text-secondary hover:text-text-primary hover:bg-background-elevated"
               }`}
-              title="Large tracks"
+              title={language === "es" ? "Pistas grandes" : "Large tracks"}
             >
               <Rows3 size={14} />
             </button>
@@ -898,7 +902,7 @@ export const Timeline: React.FC = () => {
                   ? "text-primary bg-primary/10"
                   : "text-text-secondary hover:text-text-primary hover:bg-background-elevated"
               }`}
-              title="Small tracks"
+              title={language === "es" ? "Pistas pequeñas" : "Small tracks"}
             >
               <Rows2 size={14} />
             </button>
@@ -907,7 +911,7 @@ export const Timeline: React.FC = () => {
             <button
               onClick={zoomOut}
               className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background-elevated transition-colors border-r border-border"
-              title="Zoom out"
+              title={language === "es" ? "Alejar timeline" : "Zoom out"}
             >
               <span className="text-base font-medium">−</span>
             </button>
@@ -917,12 +921,12 @@ export const Timeline: React.FC = () => {
             <button
               onClick={zoomIn}
               className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-background-elevated transition-colors border-l border-border"
-              title="Zoom in"
+              title={language === "es" ? "Acercar timeline" : "Zoom in"}
             >
               <span className="text-base font-medium">+</span>
             </button>
           </div>
-          <IconButton icon={Maximize2} title="Maximize timeline" />
+          <IconButton icon={Maximize2} title={language === "es" ? "Maximizar línea de tiempo" : "Maximize timeline"} />
         </div>
       </div>
 
@@ -1038,6 +1042,97 @@ export const Timeline: React.FC = () => {
                     snappedTime = playheadPosition;
                   }
                 }
+              }
+
+              const draggedTransitionType = e.dataTransfer.getData(
+                "application/x-frameo-transition",
+              ) as TransitionType;
+              if (draggedTransitionType) {
+                const localY =
+                  e.clientY -
+                  rect.top +
+                  (tracksRef.current?.scrollTop ?? 0);
+
+                let yCursor = 0;
+                let targetTrack = visualOrderTracks[0];
+                for (const track of visualOrderTracks) {
+                  const height = getTrackHeight(track.id);
+                  if (localY >= yCursor && localY < yCursor + height) {
+                    targetTrack = track;
+                    break;
+                  }
+                  yCursor += height;
+                }
+
+                const clips = [...(targetTrack?.clips ?? [])].sort(
+                  (a, b) => a.startTime - b.startTime,
+                );
+
+                if (clips.length < 2) {
+                  toast.warning(
+                    language === "es"
+                      ? "Se necesitan dos clips"
+                      : "Two clips required",
+                    language === "es"
+                      ? "Suelta la transición sobre una pista que tenga al menos dos clips."
+                      : "Drop the transition on a track that has at least two clips.",
+                  );
+                  return;
+                }
+
+                let bestPair:
+                  | { clipA: (typeof clips)[number]; clipB: (typeof clips)[number] }
+                  | null = null;
+                let bestDistance = Number.POSITIVE_INFINITY;
+
+                for (let i = 0; i < clips.length - 1; i += 1) {
+                  const clipA = clips[i];
+                  const clipB = clips[i + 1];
+                  const cutTime = clipA.startTime + clipA.duration;
+                  const distance = Math.abs(rawTime - cutTime);
+                  if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestPair = { clipA, clipB };
+                  }
+                }
+
+                if (!bestPair) return;
+
+                const bridge = getTransitionBridge();
+                if (!bridge.isInitialized()) bridge.initialize();
+
+                const result = bridge.createTransition(
+                  bestPair.clipA,
+                  bestPair.clipB,
+                  draggedTransitionType,
+                  0.6,
+                  bridge.getDefaultParams(draggedTransitionType),
+                );
+
+                if (!result.success || !result.transitionId) {
+                  toast.error(
+                    language === "es"
+                      ? "No se pudo crear la transición"
+                      : "Transition failed",
+                    result.error || "",
+                  );
+                  return;
+                }
+
+                const transition = bridge.getTransition(result.transitionId);
+                if (transition) {
+                  useProjectStore.getState().addClipTransition(transition);
+                  const cutTime =
+                    bestPair.clipA.startTime + bestPair.clipA.duration;
+                  const bridgePlayback = getPlaybackBridge();
+                  bridgePlayback.scrubTo(cutTime);
+                  toast.success(
+                    language === "es"
+                      ? "Transición aplicada"
+                      : "Transition applied",
+                  );
+                }
+                return;
               }
 
               // External OS file drop (e.g. from Windows Explorer)
