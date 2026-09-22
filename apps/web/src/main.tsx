@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import App from "./App";
+import { LanguageProvider } from "./i18n";
 import "./index.css";
 import { registerServiceWorker } from "./services/service-worker";
 
@@ -26,12 +27,14 @@ const root = document.getElementById("root")!;
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    {POSTHOG_KEY && POSTHOG_HOST ? (
-      <PostHogProvider client={posthog}>
+    <LanguageProvider>
+      {POSTHOG_KEY && POSTHOG_HOST ? (
+        <PostHogProvider client={posthog}>
+          <App />
+        </PostHogProvider>
+      ) : (
         <App />
-      </PostHogProvider>
-    ) : (
-      <App />
-    )}
+      )}
+    </LanguageProvider>
   </React.StrictMode>,
 );
