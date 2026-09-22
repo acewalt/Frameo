@@ -73,6 +73,23 @@ import {
 import { restoreMediaItem } from "../utils/media-recovery";
 import { projectManager } from "../services/project-manager";
 
+const cloneProjectForTimelineMutation = (project: Project): Project => ({
+  ...project,
+  timeline: {
+    ...project.timeline,
+    tracks: project.timeline.tracks.map((track) => ({
+      ...track,
+      clips: [...track.clips],
+      transitions: [...(track.transitions ?? [])],
+    })),
+    subtitles: [...(project.timeline.subtitles ?? [])],
+    markers: [...(project.timeline.markers ?? [])],
+    ...(project.timeline.beatMarkers
+      ? { beatMarkers: [...project.timeline.beatMarkers] }
+      : {}),
+  },
+});
+
 /**
  * ProjectState - Complete state interface for project management
  *
@@ -1971,7 +1988,7 @@ export const useProjectStore = create<ProjectState>()(
         const { project, actionExecutor } = get();
 
         // IMPORTANT: Deep clone the project BEFORE mutation
-        const projectCopy = structuredClone(project);
+        const projectCopy = cloneProjectForTimelineMutation(project);
 
         const action: Action = {
           type: "track/add",
@@ -2032,7 +2049,7 @@ export const useProjectStore = create<ProjectState>()(
 
       reorderTrack: async (trackId: string, newPosition: number) => {
         const { project, actionExecutor } = get();
-        const projectCopy = structuredClone(project);
+        const projectCopy = cloneProjectForTimelineMutation(project);
         const action: Action = {
           type: "track/reorder",
           id: uuidv4(),
@@ -2123,7 +2140,7 @@ export const useProjectStore = create<ProjectState>()(
         // IMPORTANT: Deep clone the project BEFORE mutation
         // actionExecutor mutates the project directly, so we need a fresh copy
         // to ensure Zustand detects the state change
-        const projectCopy = structuredClone(project);
+        const projectCopy = cloneProjectForTimelineMutation(project);
 
         const action: Action = {
           type: "clip/add",
@@ -2275,7 +2292,7 @@ export const useProjectStore = create<ProjectState>()(
 
         // Apply all track/add and clip/add actions on a single project copy to
         // avoid race conditions from multiple store updates.
-        const projectCopy = structuredClone(project);
+        const projectCopy = cloneProjectForTimelineMutation(project);
 
         // Add new audio timeline tracks as needed (reuse existing ones)
         const existingAudioCount = projectCopy.timeline.tracks.filter(
@@ -2383,7 +2400,7 @@ export const useProjectStore = create<ProjectState>()(
 
       moveClip: async (clipId: string, startTime: number, trackId?: string) => {
         const { project, actionExecutor } = get();
-        const projectCopy = structuredClone(project);
+        const projectCopy = cloneProjectForTimelineMutation(project);
         const action: Action = {
           type: "clip/move",
           id: uuidv4(),
