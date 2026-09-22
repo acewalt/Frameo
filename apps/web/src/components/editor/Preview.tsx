@@ -1725,7 +1725,7 @@ export const Preview: React.FC = () => {
             scheduleScrubVideoRelease();
             resolve(null);
           }
-        }, 50);
+        }, isInteractingRef.current ? 0 : 50);
       });
     },
     [
