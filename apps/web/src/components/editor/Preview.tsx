@@ -1645,7 +1645,10 @@ export const Preview: React.FC = () => {
               cached = { video, url, lastUsed: Date.now() };
               videoElementCacheRef.current.set(cacheKey, cached);
 
-              while (videoElementCacheRef.current.size > 2) {
+              // Layered previews can legitimately need several video
+              // elements at the same playhead. Evicting at 2 caused a decoder
+              // used by another active layer to disappear mid-render.
+              while (videoElementCacheRef.current.size > 8) {
                 evictOldestVideoElement();
               }
             }
