@@ -1680,33 +1680,37 @@ export const Preview: React.FC = () => {
               return;
             }
 
+            // Keep the decoded frame at the media's real aspect ratio.
+            // Previously this function baked the frame into a project-sized
+            // black canvas. Transforming a portrait clip therefore moved and
+            // scaled the black letterbox together with the clip, hiding layers
+            // underneath it.
+            const sourceWidth = Math.max(2, video.videoWidth || canvasWidth);
+            const sourceHeight = Math.max(2, video.videoHeight || canvasHeight);
+            const previewScale = Math.min(
+              1,
+              canvasWidth / sourceWidth,
+              canvasHeight / sourceHeight,
+            );
+            const frameWidth = Math.max(
+              2,
+              Math.round(sourceWidth * previewScale),
+            );
+            const frameHeight = Math.max(
+              2,
+              Math.round(sourceHeight * previewScale),
+            );
+
             const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = canvasWidth;
-            tempCanvas.height = canvasHeight;
+            tempCanvas.width = frameWidth;
+            tempCanvas.height = frameHeight;
             const tempCtx = tempCanvas.getContext("2d");
             if (!tempCtx) {
               resolve(null);
               return;
             }
 
-            const videoAspect = video.videoWidth / video.videoHeight;
-            const canvasAspect = canvasWidth / canvasHeight;
-            let drawWidth = canvasWidth;
-            let drawHeight = canvasHeight;
-            let offsetX = 0;
-            let offsetY = 0;
-
-            if (videoAspect > canvasAspect) {
-              drawHeight = canvasWidth / videoAspect;
-              offsetY = (canvasHeight - drawHeight) / 2;
-            } else {
-              drawWidth = canvasHeight * videoAspect;
-              offsetX = (canvasWidth - drawWidth) / 2;
-            }
-
-            tempCtx.fillStyle = "#000000";
-            tempCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-            tempCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+            tempCtx.drawImage(video, 0, 0, frameWidth, frameHeight);
 
             const frame = await createImageBitmap(tempCanvas);
             if (isStaleRequest()) {
