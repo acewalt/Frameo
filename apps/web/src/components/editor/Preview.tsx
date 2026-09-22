@@ -2618,16 +2618,6 @@ export const Preview: React.FC = () => {
     renderFrameDirectlyRef.current = renderFrameDirectly;
   }, [renderFrameDirectly]);
 
-  const isPlayingRef = useRef(isPlaying);
-  useEffect(() => {
-    domPlayingRef.current = isPlaying;
-  }, [isPlaying]);
-
-  const playheadPositionRef = useRef(playheadPosition);
-  useEffect(() => {
-    domPlayheadRef.current = playheadPosition;
-  }, [playheadPosition]);
-
   useEffect(() => {
     setImageLoadCallback(() => {
       if (!domPlayingRef.current) {
