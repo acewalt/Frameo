@@ -1211,7 +1211,6 @@ export const Timeline: React.FC = () => {
                   selectedClipIds={selectedClipIds}
                   textClips={getTextClipsForTrack(track.id)}
                   shapeClips={getShapeClipsForTrack(track.id)}
-                  trackHeights={trackHeightsMap}
                   timelineRef={tracksRef}
                   onSelectClip={handleSelectClip}
                   onDropMedia={handleDropMedia}
