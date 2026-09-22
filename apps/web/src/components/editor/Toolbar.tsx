@@ -187,10 +187,10 @@ export const Toolbar: React.FC = () => {
           duration: project.timeline?.duration ?? 0,
         });
       } else {
-        throw new Error(finalResult?.error?.message || "Export failed");
+        throw new Error(finalResult?.error?.message || (language === "es" ? "La exportación falló" : "Export failed"));
       }
     },
-    [project, track],
+    [project, track, language],
   );
 
   const showSavePicker = useCallback(async (filename: string, ext: string): Promise<FileSystemWritableFileStream> => {
@@ -208,7 +208,7 @@ export const Toolbar: React.FC = () => {
       }).showSaveFilePicker({
         suggestedName: filename,
         types: [{
-          description: "Media file",
+          description: language === "es" ? "Archivo multimedia" : "Media file",
           accept: { [mime]: [`.${ext}`] },
         }],
       });
@@ -272,7 +272,7 @@ export const Toolbar: React.FC = () => {
         return Promise.resolve();
       },
     } as unknown as FileSystemWritableFileStream;
-  }, []);
+  }, [language]);
 
   const handleExport = useCallback(
     async (type: ExportType) => {
@@ -336,7 +336,7 @@ export const Toolbar: React.FC = () => {
             });
           } else {
             try { await writable.abort(); } catch {}
-            throw new Error(finalResult?.error?.message || "Export failed");
+            throw new Error(finalResult?.error?.message || (language === "es" ? "La exportación falló" : "Export failed"));
           }
         } else {
           const base = {
@@ -382,11 +382,11 @@ export const Toolbar: React.FC = () => {
         setExportState((prev) => ({
           ...prev,
           isExporting: false,
-          error: error instanceof Error ? error.message : "Export failed",
+          error: error instanceof Error ? error.message : (language === "es" ? "La exportación falló" : "Export failed"),
         }));
       }
     },
-    [project, track, runExport, showSavePicker],
+    [project, track, runExport, showSavePicker, language],
   );
 
   const handleCancelExport = useCallback(() => {
@@ -452,11 +452,11 @@ export const Toolbar: React.FC = () => {
         setExportState((prev) => ({
           ...prev,
           isExporting: false,
-          error: error instanceof Error ? error.message : "Export failed",
+          error: error instanceof Error ? error.message : (language === "es" ? "La exportación falló" : "Export failed"),
         }));
       }
     },
-    [project, track, runExport, showSavePicker],
+    [project, track, runExport, showSavePicker, language],
   );
 
 
@@ -464,8 +464,8 @@ export const Toolbar: React.FC = () => {
     async (screenBlob: Blob, webcamBlob?: Blob) => {
       if (!screenBlob || screenBlob.size === 0) {
         toast.error(
-          "Recording failed",
-          "No video data was captured. Please try again.",
+          language === "es" ? "Falló la grabación" : "Recording failed",
+          language === "es" ? "No se capturaron datos de video. Inténtalo de nuevo." : "No video data was captured. Please try again.",
         );
         return;
       }
@@ -485,7 +485,7 @@ export const Toolbar: React.FC = () => {
         importCount++;
       } else {
         errors.push(
-          screenResult.error?.message || "Failed to import screen recording",
+          screenResult.error?.message || (language === "es" ? "No se pudo importar la grabación de pantalla" : "Failed to import screen recording"),
         );
       }
 
@@ -498,23 +498,23 @@ export const Toolbar: React.FC = () => {
           importCount++;
         } else {
           errors.push(
-            webcamResult.error?.message || "Failed to import webcam recording",
+            webcamResult.error?.message || (language === "es" ? "No se pudo importar la grabación de cámara" : "Failed to import webcam recording"),
           );
         }
       }
 
       if (importCount > 0) {
         toast.success(
-          `${importCount} recording${importCount > 1 ? "s" : ""} imported!`,
+          language === "es" ? `${importCount} grabación${importCount > 1 ? "es" : ""} importada${importCount > 1 ? "s" : ""}` : `${importCount} recording${importCount > 1 ? "s" : ""} imported!`,
           webcamBlob && webcamBlob.size > 0
-            ? "Screen and webcam added to assets. Use the timeline to composite them."
-            : "Screen recording added to assets.",
+            ? (language === "es" ? "Pantalla y cámara añadidas a Medios. Usa la línea de tiempo para componerlas." : "Screen and webcam added to assets. Use the timeline to composite them.")
+            : (language === "es" ? "Grabación de pantalla añadida a Medios." : "Screen recording added to assets."),
         );
       } else if (errors.length > 0) {
-        toast.error("Import failed", errors.join(". "));
+        toast.error(language === "es" ? "Falló la importación" : "Import failed", errors.join(". "));
       }
     },
-    [importMedia],
+    [importMedia, language],
   );
 
   const projectRes = `${project.settings.width}×${project.settings.height}`;
@@ -530,9 +530,9 @@ export const Toolbar: React.FC = () => {
     separator?: boolean;
   }> = [
     {
-      label: "MP4 Standard",
+      label: language === "es" ? "MP4 estándar" : "MP4 Standard",
       icon: Zap,
-      desc: `${projectRes} H.264 - Web & social`,
+      desc: language === "es" ? `${projectRes} H.264 - Web y redes` : `${projectRes} H.264 - Web & social`,
       type: "mp4",
       recommended: true,
     },
@@ -547,7 +547,7 @@ export const Toolbar: React.FC = () => {
       ? []
       : [
           {
-            label: "4K Standard",
+            label: language === "es" ? "4K estándar" : "4K Standard",
             icon: FileVideo,
             desc: "3840×2160 - YouTube 4K",
             type: "4k" as ExportType,
