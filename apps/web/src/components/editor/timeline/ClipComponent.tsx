@@ -315,7 +315,6 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
     track.id,
     track.type,
     allTracks,
-    trackHeights,
     timelineRef,
     playheadPosition,
     snapSettings,
