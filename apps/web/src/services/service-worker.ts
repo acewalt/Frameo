@@ -61,8 +61,8 @@ class ServiceWorkerManager {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register("/sw.js", {
-        scope: "/",
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+        scope: import.meta.env.BASE_URL,
       });
 
       this.registration = registration;
@@ -306,9 +306,3 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   return serviceWorkerManager.register();
 }
 
-/**
- * Check if AI features are available (requires online)
- */
-export function isAIAvailable(): boolean {
-  return serviceWorkerManager.getOnlineStatus();
-}
