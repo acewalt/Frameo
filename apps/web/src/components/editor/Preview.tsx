@@ -5774,10 +5774,13 @@ export const Preview: React.FC = () => {
     setInteractionMode("none");
     setActiveHandle(null);
     interactionStartRef.current = null;
-    setLiveTransform(null);
 
     if (wasInteracting) {
-      renderFrameDirectly(playheadPosition);
+      void renderFrameDirectly(playheadPosition).finally(() => {
+        setLiveTransform(null);
+      });
+    } else {
+      setLiveTransform(null);
     }
   }, [updateClipTransform, updateTextTransform, updateShapeTransform, renderFrameDirectly, playheadPosition]);
 
@@ -5827,10 +5830,13 @@ export const Preview: React.FC = () => {
         rotationStartRef.current = null;
         setInteractionTargetType(null);
         interactionTargetIdRef.current = null;
-        setLiveTransform(null);
 
         if (wasInteracting) {
-          renderFrameDirectly(playheadPosition);
+          void renderFrameDirectly(playheadPosition).finally(() => {
+            setLiveTransform(null);
+          });
+        } else {
+          setLiveTransform(null);
         }
       };
 
@@ -6027,7 +6033,7 @@ export const Preview: React.FC = () => {
               cursor: hoveredGraphicClipId && !isPlaying ? "pointer" : "default",
               opacity:
                 canUseRealtimeDomTransform &&
-                interactionMode !== "none" &&
+                (interactionMode !== "none" || liveTransform !== null) &&
                 interactionMediaUrl
                   ? 0
                   : 1,
@@ -6037,7 +6043,7 @@ export const Preview: React.FC = () => {
           {/* Frameo fast free-transform preview: mirrors Export-to-video by
               transforming the actual media element directly while dragging. */}
           {canUseRealtimeDomTransform &&
-            interactionMode !== "none" &&
+            (interactionMode !== "none" || liveTransform !== null) &&
             interactionMediaUrl &&
             clipBounds &&
             interactionMediaItem &&
