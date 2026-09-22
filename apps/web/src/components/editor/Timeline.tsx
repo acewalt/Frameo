@@ -701,8 +701,8 @@ export const Timeline: React.FC = () => {
       data-tour="timeline"
       className="h-full bg-background border-t border-border flex flex-col"
     >
-      <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-background-secondary relative z-[100]">
-        <div className="flex items-center gap-2">
+      <div className="h-11 sm:h-12 border-b border-border flex items-center gap-2 sm:justify-between px-2 sm:px-4 bg-background-secondary relative z-[100] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <div className="flex bg-background-tertiary rounded-lg p-1 border border-border">
             <IconButton
               icon={Undo2}
@@ -732,7 +732,7 @@ export const Timeline: React.FC = () => {
               }`}
             >
               <Scissors size={14} />
-              <span className="text-[10px] font-medium">{language === "es" ? "DIVIDIR" : "SPLIT"}</span>
+              <span className="hidden min-[390px]:inline text-[10px] font-medium">{language === "es" ? "DIVIDIR" : "SPLIT"}</span>
             </button>
             <IconButton
               icon={Trash2}
@@ -752,7 +752,7 @@ export const Timeline: React.FC = () => {
                 title={language === "es" ? "Añadir pista" : "Add new track"}
               >
                 <Plus size={14} />
-                <span className="text-[11px] font-semibold">{language === "es" ? "Añadir pista" : "Add Track"}</span>
+                <span className="text-[10px] sm:text-[11px] font-semibold">{language === "es" ? "Añadir" : "Add"}</span>
                 <ChevronDownIcon size={12} className="ml-0.5 opacity-60" />
               </button>
             </DropdownMenuTrigger>
@@ -794,7 +794,7 @@ export const Timeline: React.FC = () => {
                 title={language === "es" ? "Administrar capas de pistas" : "Manage track layers"}
               >
                 <Layers size={14} />
-                <span className="text-[10px] font-medium tracking-wide">{language === "es" ? "CAPAS" : "LAYERS"}</span>
+                <span className="hidden sm:inline text-[10px] font-medium tracking-wide">{language === "es" ? "CAPAS" : "LAYERS"}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent
@@ -874,15 +874,15 @@ export const Timeline: React.FC = () => {
             title={snapSettings.enabled ? (language === "es" ? "Desactivar magnetismo" : "Disable snapping") : (language === "es" ? "Activar magnetismo" : "Enable snapping")}
           >
             <Magnet size={14} />
-            <span className="text-[10px] font-medium tracking-wide">{language === "es" ? "IMÁN" : "SNAP"}</span>
+            <span className="hidden sm:inline text-[10px] font-medium tracking-wide">{language === "es" ? "IMÁN" : "SNAP"}</span>
           </button>
         </div>
 
-        <div className="font-mono text-primary text-sm font-bold tracking-wider bg-background-tertiary px-4 py-1.5 rounded-lg border border-primary/20 shadow-[0_0_12px_rgba(34,197,94,0.15)]">
+        <div className="shrink-0 font-mono text-primary text-[11px] sm:text-sm font-bold tracking-wider bg-background-tertiary px-2 sm:px-4 py-1.5 rounded-lg border border-primary/20 shadow-[0_0_12px_rgba(34,197,94,0.15)]">
           {formatTimecode(playheadPosition)}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
           <div className="flex items-center bg-background-tertiary rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => { setTrackHeight(80); useTimelineStore.setState({ trackHeights: {} }); }}
@@ -936,7 +936,7 @@ export const Timeline: React.FC = () => {
         onClick={handleBackgroundClick}
       >
         <div className="flex shrink-0">
-          <div className="w-32 h-8 bg-background-tertiary border-b border-r border-border shrink-0" />
+          <div className="w-20 sm:w-32 h-8 bg-background-tertiary border-b border-r border-border shrink-0" />
           <div className="flex-1 overflow-hidden relative">
             <div
               style={{
@@ -968,7 +968,7 @@ export const Timeline: React.FC = () => {
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="w-32 bg-background-secondary border-r border-border shrink-0 z-20 shadow-lg overflow-hidden">
+          <div className="w-20 sm:w-32 bg-background-secondary border-r border-border shrink-0 z-20 shadow-lg overflow-hidden">
             <div
               className="flex flex-col"
               style={{ transform: `translateY(-${scrollY}px)` }}
