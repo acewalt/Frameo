@@ -3989,7 +3989,7 @@ export const Preview: React.FC = () => {
               const tempBitmaps: ImageBitmap[] = [];
 
               for (const { track, originalIndex } of allRenderableTracks) {
-                if (track.type === "video") {
+                if (track.type === "video" || track.type === "image") {
                   const trackFrames = validFrames.filter(
                     (f) => clipToTrackIndex.get(f.clip.id) === originalIndex,
                   );
@@ -3999,52 +3999,69 @@ export const Preview: React.FC = () => {
                         bitmap: frame,
                         transform,
                       });
+                    } else {
+                      const bitmap = await createImageBitmap(frame);
+                      tempBitmaps.push(bitmap);
+                      gpuLayers.push({
+                        bitmap,
+                        transform,
+                      });
                     }
-                  }
-                } else if (track.type === "image") {
-                  const trackFrames = validFrames.filter(
-                    (f) => clipToTrackIndex.get(f.clip.id) === originalIndex,
-                  );
-                  for (const { transform, frame } of trackFrames) {
-                    drawFrameWithTransform(
-                      ctx,
-                      frame,
-                      transform,
-                      canvas.width,
-                      canvas.height,
-                    );
                   }
                 } else if (track.type === "graphics") {
                   const trackShapeClips = activeShapeClips.filter(
                     (sc) => sc.trackId === track.id,
                   );
-                  for (const shapeClip of trackShapeClips) {
-                    renderShapeClipToCanvas(
-                      ctx,
-                      shapeClip,
-                      canvas.width,
-                      canvas.height,
-                      currentPlayhead,
-                    );
-                  }
-                } else if (track.type === "text") {
-                  const trackTextClips = activeTextClips.filter(
-                    (tc) => tc.trackId === track.id,
-                  );
-                  for (const textClip of trackTextClips) {
+                  if (trackShapeClips.length > 0) {
                     const offscreen = new OffscreenCanvas(
                       canvas.width,
                       canvas.height,
                     );
                     const offCtx = offscreen.getContext("2d");
                     if (offCtx) {
-                      renderTextClipToCanvas(
-                        offCtx as unknown as CanvasRenderingContext2D,
-                        textClip,
-                        canvas.width,
-                        canvas.height,
-                        currentPlayhead,
-                      );
+                      for (const shapeClip of trackShapeClips) {
+                        renderShapeClipToCanvas(
+                          offCtx as unknown as CanvasRenderingContext2D,
+                          shapeClip,
+                          canvas.width,
+                          canvas.height,
+                          currentPlayhead,
+                        );
+                      }
+                      const bitmap = await createImageBitmap(offscreen);
+                      tempBitmaps.push(bitmap);
+                      gpuLayers.push({
+                        bitmap,
+                        transform: {
+                          ...DEFAULT_TRANSFORM,
+                          opacity: 1,
+                          scale: { x: 1, y: 1 },
+                          position: { x: 0, y: 0 },
+                          anchor: { x: 0, y: 0 },
+                        },
+                      });
+                    }
+                  }
+                } else if (track.type === "text") {
+                  const trackTextClips = activeTextClips.filter(
+                    (tc) => tc.trackId === track.id,
+                  );
+                  if (trackTextClips.length > 0) {
+                    const offscreen = new OffscreenCanvas(
+                      canvas.width,
+                      canvas.height,
+                    );
+                    const offCtx = offscreen.getContext("2d");
+                    if (offCtx) {
+                      for (const textClip of trackTextClips) {
+                        renderTextClipToCanvas(
+                          offCtx as unknown as CanvasRenderingContext2D,
+                          textClip,
+                          canvas.width,
+                          canvas.height,
+                          currentPlayhead,
+                        );
+                      }
                       const bitmap = await createImageBitmap(offscreen);
                       tempBitmaps.push(bitmap);
                       gpuLayers.push({
