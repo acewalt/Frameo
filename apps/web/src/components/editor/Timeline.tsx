@@ -1295,7 +1295,18 @@ export const Timeline: React.FC = () => {
           position={playheadPosition}
           pixelsPerSecond={pixelsPerSecond}
           scrollX={scrollX}
-          headerOffset={128}
+          onSeek={(time) => {
+            const bridge = getPlaybackBridge();
+            bridge.scrubTo(time);
+          }}
+          onScrubStart={() => {
+            const bridge = getPlaybackBridge();
+            bridge.startScrubbing();
+          }}
+          onScrubEnd={() => {
+            const bridge = getPlaybackBridge();
+            bridge.endScrubbing();
+          }}
         />
       </div>
     </div>
