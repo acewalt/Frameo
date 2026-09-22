@@ -12,6 +12,7 @@ import {
   Type,
 } from "lucide-react";
 import { useProjectStore } from "../../../stores/project-store";
+import { useI18n } from "../../../i18n";
 import type { TextStyle, FontWeight } from "@openreel/core";
 import {
   ColorPicker,
@@ -159,10 +160,11 @@ const FONT_CATEGORIES = {
 const FontSelector: React.FC<{
   value: string;
   onChange: (font: string) => void;
-}> = ({ value, onChange }) => {
+  language: "es" | "en";
+}> = ({ value, onChange, language }) => {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[10px] text-text-secondary">Font</span>
+      <span className="text-[10px] text-text-secondary">{language === "es" ? "Fuente" : "Font"}</span>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="max-w-[140px] bg-background-tertiary border-border text-text-primary text-[10px]">
           <SelectValue />
@@ -171,7 +173,18 @@ const FontSelector: React.FC<{
           {Object.entries(FONT_CATEGORIES).map(([category, fonts]) => (
             <SelectGroup key={category}>
               <SelectLabel className="text-text-muted text-[10px] font-medium">
-                {category}
+                {language === "es"
+                  ? ({
+                      "Popular": "Popular",
+                      "Display & Headlines": "Display y titulares",
+                      "Elegant & Serif": "Elegantes y serif",
+                      "Modern & Clean": "Modernas y limpias",
+                      "Handwritten & Script": "Manuscritas y script",
+                      "Fun & Creative": "Divertidas y creativas",
+                      "Monospace": "Monoespaciadas",
+                      "System": "Sistema",
+                    } as Record<string,string>)[category] ?? category
+                  : category}
               </SelectLabel>
               {fonts.map((font) => (
                 <SelectItem key={font} value={font} style={{ fontFamily: font }}>
@@ -196,6 +209,7 @@ interface TextSectionProps {
  * - 15.1: Display text content editor and styling controls
  */
 export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
+  const { language } = useI18n();
   const {
     getTextClip,
     updateTextContent,
@@ -272,7 +286,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
     return (
       <div className="p-4 text-center">
         <Type size={24} className="mx-auto mb-2 text-text-muted" />
-        <p className="text-[10px] text-text-muted">No text clip selected</p>
+        <p className="text-[10px] text-text-muted">{language === "es" ? "No hay texto seleccionado" : "No text clip selected"}</p>
       </div>
     );
   }
@@ -280,11 +294,11 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <span className="text-[10px] text-text-secondary">Text Content</span>
+        <span className="text-[10px] text-text-secondary">{language === "es" ? "Contenido del texto" : "Text Content"}</span>
         <textarea
           value={text}
           onChange={(e) => handleTextChange(e.target.value)}
-          placeholder="Enter text..."
+          placeholder={language === "es" ? "Escribe el texto..." : "Enter text..."}
           className="w-full h-20 px-3 py-2 text-sm text-text-primary bg-background-tertiary border border-border rounded-lg resize-none outline-none focus:border-primary"
           style={{ fontFamily: style.fontFamily }}
         />
@@ -293,10 +307,11 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <FontSelector
           value={style.fontFamily}
+          language={language}
           onChange={(fontFamily) => handleStyleChange({ fontFamily })}
         />
         <NumberInput
-          label="Size"
+          label={language === "es" ? "Tamaño" : "Size"}
           value={style.fontSize}
           onChange={(fontSize) => handleStyleChange({ fontSize })}
           min={8}
@@ -304,7 +319,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
           unit="px"
         />
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-secondary">Style</span>
+          <span className="text-[10px] text-text-secondary">{language === "es" ? "Estilo" : "Style"}</span>
           <div className="flex gap-1">
             <button
               onClick={() =>
@@ -317,7 +332,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
                   ? "bg-primary text-white"
                   : "bg-background-secondary border border-border text-text-secondary hover:text-text-primary"
               }`}
-              title="Bold"
+              title={language === "es" ? "Negrita" : "Bold"}
             >
               <Bold size={12} />
             </button>
@@ -332,7 +347,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
                   ? "bg-primary text-white"
                   : "bg-background-secondary border border-border text-text-secondary hover:text-text-primary"
               }`}
-              title="Italic"
+              title={language === "es" ? "Cursiva" : "Italic"}
             >
               <Italic size={12} />
             </button>
@@ -348,7 +363,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
                   ? "bg-primary text-white"
                   : "bg-background-secondary border border-border text-text-secondary hover:text-text-primary"
               }`}
-              title="Underline"
+              title={language === "es" ? "Subrayado" : "Underline"}
             >
               <Underline size={12} />
             </button>
@@ -357,16 +372,16 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-text-secondary">Text Align</span>
+        <span className="text-[10px] text-text-secondary">{language === "es" ? "Alineación" : "Text Align"}</span>
         <ToggleButtonGroup
           options={[
-            { value: "left", icon: <AlignLeft size={12} />, label: "Left" },
+            { value: "left", icon: <AlignLeft size={12} />, label: language === "es" ? "Izquierda" : "Left" },
             {
               value: "center",
               icon: <AlignCenter size={12} />,
-              label: "Center",
+              label: language === "es" ? "Centro" : "Center",
             },
-            { value: "right", icon: <AlignRight size={12} />, label: "Right" },
+            { value: "right", icon: <AlignRight size={12} />, label: language === "es" ? "Derecha" : "Right" },
           ]}
           value={style.textAlign}
           onChange={(textAlign) =>
@@ -379,29 +394,29 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <span className="text-[10px] text-text-secondary font-medium">
-          Position on Canvas
+          {language === "es" ? "Posición en el canvas" : "Position on Canvas"}
         </span>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-muted">Align to Canvas</span>
+          <span className="text-[10px] text-text-muted">{language === "es" ? "Alinear al canvas" : "Align to Canvas"}</span>
           <div className="flex gap-1">
             <button
               onClick={handleCenterHorizontal}
               className="p-1.5 rounded bg-background-secondary border border-border text-text-secondary hover:text-text-primary transition-colors"
-              title="Center Horizontally"
+              title={language === "es" ? "Centrar horizontalmente" : "Center Horizontally"}
             >
               <AlignHorizontalJustifyCenter size={12} />
             </button>
             <button
               onClick={handleCenterVertical}
               className="p-1.5 rounded bg-background-secondary border border-border text-text-secondary hover:text-text-primary transition-colors"
-              title="Center Vertically"
+              title={language === "es" ? "Centrar verticalmente" : "Center Vertically"}
             >
               <AlignVerticalJustifyCenter size={12} />
             </button>
             <button
               onClick={handleCenterBoth}
               className="p-1.5 rounded bg-primary text-white transition-colors"
-              title="Center Both"
+              title={language === "es" ? "Centrar ambos" : "Center Both"}
             >
               <Crosshair size={12} />
             </button>
@@ -411,12 +426,12 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <ColorField
-          label="Text Color"
+          label={language === "es" ? "Color del texto" : "Text Color"}
           value={style.color}
           onChange={(color) => handleStyleChange({ color })}
         />
         <ColorField
-          label="Background"
+          label={language === "es" ? "Fondo" : "Background"}
           value={style.backgroundColor || "transparent"}
           onChange={(backgroundColor) => handleStyleChange({ backgroundColor })}
           showAlpha
@@ -426,15 +441,15 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <span className="text-[10px] text-text-secondary font-medium">
-          Stroke
+          {language === "es" ? "Contorno" : "Stroke"}
         </span>
         <ColorField
-          label="Color"
+          label={language === "es" ? "Color" : "Color"}
           value={style.strokeColor || "#000000"}
           onChange={(strokeColor) => handleStyleChange({ strokeColor })}
         />
         <NumberInput
-          label="Width"
+          label={language === "es" ? "Ancho" : "Width"}
           value={style.strokeWidth || 0}
           onChange={(strokeWidth) => handleStyleChange({ strokeWidth })}
           min={0}
@@ -445,16 +460,16 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <span className="text-[10px] text-text-secondary font-medium">
-          Shadow
+          {language === "es" ? "Sombra" : "Shadow"}
         </span>
         <ColorField
-          label="Color"
+          label={language === "es" ? "Color" : "Color"}
           value={style.shadowColor || "#000000"}
           onChange={(shadowColor) => handleStyleChange({ shadowColor })}
           showAlpha
         />
         <NumberInput
-          label="Offset X"
+          label={language === "es" ? "Desplazamiento X" : "Offset X"}
           value={style.shadowOffsetX || 0}
           onChange={(shadowOffsetX) => handleStyleChange({ shadowOffsetX })}
           min={-50}
@@ -462,7 +477,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
           unit="px"
         />
         <NumberInput
-          label="Offset Y"
+          label={language === "es" ? "Desplazamiento Y" : "Offset Y"}
           value={style.shadowOffsetY || 0}
           onChange={(shadowOffsetY) => handleStyleChange({ shadowOffsetY })}
           min={-50}
@@ -470,7 +485,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
           unit="px"
         />
         <NumberInput
-          label="Blur"
+          label={language === "es" ? "Desenfoque" : "Blur"}
           value={style.shadowBlur || 0}
           onChange={(shadowBlur) => handleStyleChange({ shadowBlur })}
           min={0}
@@ -481,7 +496,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <NumberInput
-          label="Line Height"
+          label={language === "es" ? "Altura de línea" : "Line Height"}
           value={style.lineHeight || 1.2}
           onChange={(lineHeight) => handleStyleChange({ lineHeight })}
           min={0.5}
@@ -489,7 +504,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
           step={0.1}
         />
         <NumberInput
-          label="Letter Spacing"
+          label={language === "es" ? "Espaciado de letras" : "Letter Spacing"}
           value={style.letterSpacing || 0}
           onChange={(letterSpacing) => handleStyleChange({ letterSpacing })}
           min={-10}
