@@ -7,6 +7,7 @@ import {
   Monitor,
   Square,
   FolderOpen,
+  Languages,
 } from "lucide-react";
 import { Button, Switch, Label } from "@openreel/ui";
 import { useProjectStore } from "../../stores/project-store";
@@ -17,6 +18,7 @@ import { RecentProjects } from "./RecentProjects";
 import { useRouter } from "../../hooks/use-router";
 import { useEditorPreload } from "../../hooks/useEditorPreload";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
+import { useI18n } from "../../i18n";
 
 interface FormatOption {
   id: string;
@@ -58,7 +60,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   },
 ];
 
-const OpenReelLogo: React.FC<{ className?: string }> = ({ className = "" }) => (
+const FrameoLogo: React.FC<{ className?: string }> = ({ className = "" }) => (
   <svg
     viewBox="0 0 490 490"
     fill="none"
@@ -134,6 +136,7 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
+  const { language, setLanguage, t } = useI18n();
   const setSkipWelcomeScreen = useUIStore(
     (state) => state.setSkipWelcomeScreen,
   );
@@ -150,7 +153,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   const handleCreateProject = useCallback(
     (option: FormatOption) => {
       const preset = SOCIAL_MEDIA_PRESETS[option.preset];
-      createNewProject(`New ${option.label} Video`, {
+      const projectName = option.id === "vertical" ? t("verticalProject") : option.id === "square" ? t("squareProject") : t("horizontalProject");
+      createNewProject(projectName, {
         width: preset.width,
         height: preset.height,
         frameRate: preset.frameRate,
@@ -164,7 +168,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
       });
       navigate("editor");
     },
-    [createNewProject, navigate, track],
+    [createNewProject, navigate, track, t],
   );
 
   const handleTemplateApplied = useCallback(() => {
@@ -205,9 +209,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             onClick={() => setViewMode("home")}
           >
             <ArrowRight className="rotate-180" size={16} />
-            Back
+            {t("back")}
           </Button>
-          <h2 className="text-sm font-medium text-text-primary">Templates</h2>
+          <h2 className="text-sm font-medium text-text-primary">{t("templates")}</h2>
           <div className="w-16" />
         </header>
         <div className="flex-1 overflow-y-auto p-6">
@@ -230,7 +234,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             Back
           </Button>
           <h2 className="text-sm font-medium text-text-primary">
-            Recent Projects
+            {t("recentProjects")}
           </h2>
           <div className="w-16" />
         </header>
@@ -247,25 +251,30 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(34,197,94,0.03),transparent_50%)]" />
 
       <div className="relative h-full flex flex-col items-center justify-center px-6">
+        <div className="absolute top-5 right-6 z-20 flex items-center gap-1 rounded-lg border border-border bg-background-secondary p-1">
+          <Languages size={14} className="mx-2 text-text-muted" />
+          <button onClick={() => setLanguage("es")} className={`px-2 py-1 rounded text-xs ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
+          <button onClick={() => setLanguage("en")} className={`px-2 py-1 rounded text-xs ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
+        </div>
         <div className="w-full max-w-3xl">
           <div className="flex flex-col items-center text-center mb-12">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 text-primary">
-                <OpenReelLogo className="w-full h-full" />
+                <FrameoLogo className="w-full h-full" />
               </div>
               <span className="text-xl font-semibold text-text-primary tracking-tight">
-                Open Reel Video
+                Frameo
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-3">
-              From idea to export.
+              {t("tagline")}
             </h1>
             <p className="text-xl text-text-secondary mb-8">
-              In your browser.
+              {t("inBrowser")}
             </p>
             <p className="text-base text-text-muted max-w-md">
-              Pick a format and start creating. You can change this anytime.
+              {t("pickFormat")}
             </p>
           </div>
 
@@ -310,7 +319,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                     </div>
 
                     <h3 className="text-lg font-semibold text-text-primary mb-1">
-                      {option.label}
+                      {option.id === "vertical" ? t("vertical") : option.id === "square" ? t("square") : t("horizontal")}
                     </h3>
                     <p className="text-sm text-text-muted mb-3">
                       {option.description}
@@ -328,7 +337,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                     transition-all duration-200
                   `}
                   >
-                    Start creating
+                    {t("startCreating")}
                     <ArrowRight size={14} />
                   </div>
                 </button>
@@ -343,7 +352,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               className="rounded-xl"
             >
               <Layers size={16} />
-              Browse templates
+              {t("browseTemplates")}
             </Button>
             <Button
               variant="outline"
@@ -351,7 +360,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               className="rounded-xl"
             >
               <Clock size={16} />
-              Recent projects
+              {t("recentProjects")}
             </Button>
             <Button
               variant="outline"
@@ -359,7 +368,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               className="rounded-xl"
             >
               <FolderOpen size={16} />
-              Open editor
+              {t("openEditor")}
             </Button>
           </div>
         </div>
@@ -375,7 +384,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               htmlFor="skip-welcome"
               className="text-xs text-text-muted cursor-pointer"
             >
-              Skip on startup
+              {t("skipStartup")}
             </Label>
           </div>
 
