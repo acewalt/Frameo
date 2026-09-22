@@ -1,8 +1,8 @@
 {
-  "name": "OpenReel",
-  "short_name": "OpenReel",
-  "description": "Professional browser-based video, audio, and photo editing application",
-  "start_url": "/",
+  "name": "Frameo",
+  "short_name": "Frameo",
+  "description": "Frameo - browser-based video editor",
+  "start_url": "/Frameo/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
@@ -19,6 +19,10 @@
       "type": "image/png"
     }
   ],
-  "categories": ["productivity", "utilities"],
-  "prefer_related_applications": false
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
+  "scope": "/Frameo/"
 }
