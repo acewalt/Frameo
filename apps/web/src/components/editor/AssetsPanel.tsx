@@ -17,7 +17,6 @@ import type { MediaItem } from "@openreel/core";
 import { AspectRatioMatchDialog } from "./dialogs/AspectRatioMatchDialog";
 import { RecipesTab } from "./panels/RecipesTab";
 import { TemplatesTab } from "./panels/TemplatesTab";
-import { useTtsAudioStore } from "../../stores/tts-store";
 import { toast } from "../../stores/notification-store";
 import { saveFileHandle, saveDirectoryHandle } from "../../services/media-storage";
 import {
@@ -32,7 +31,7 @@ import {
   
   
 } from "@openreel/ui";
-import { loadMediaBlob } from "../../services/media-storage";
+import { useI18n } from "../../i18n";
 
 const formatDuration = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -548,6 +547,9 @@ const LoadingIndicator: React.FC<{ message: string }> = ({ message }) => (
 );
 
 export const AssetsPanel: React.FC = () => {
+  const { t } = useI18n();
+  const tabLabel = (tab: AssetsTab) => tab === "media" ? t("media") : tab === "text" ? t("text") : tab === "graphics" ? t("graphics") : tab === "recipes" ? t("recipes") : t("projectTemplates");
+  const tabDescription = (tab: AssetsTab) => tab === "media" ? t("mediaDescription") : tab === "text" ? t("textDescription") : tab === "graphics" ? t("graphicsDescription") : tab === "recipes" ? t("recipesDescription") : t("templatesDescription");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTabRaw] = useState<AssetsTab>("media");
@@ -897,15 +899,15 @@ export const AssetsPanel: React.FC = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search media"
+                  placeholder={t("searchMedia")}
                   className="pl-9 text-xs bg-background-tertiary border-border text-text-primary h-9"
                 />
               </div>
               <div className="flex items-center bg-background-tertiary border border-border rounded-lg p-0.5">
                 {([
-                  { mode: "large" as const, icon: LayoutGrid, title: "Large icons" },
-                  { mode: "small" as const, icon: Grid2x2, title: "Small icons" },
-                  { mode: "list" as const, icon: List, title: "List view" },
+                  { mode: "large" as const, icon: LayoutGrid, title: t("largeIcons") },
+                  { mode: "small" as const, icon: Grid2x2, title: t("smallIcons") },
+                  { mode: "list" as const, icon: List, title: t("listView") },
                 ]).map(({ mode, icon: ViewIcon, title }) => (
                   <button
                     key={mode}
@@ -989,7 +991,7 @@ export const AssetsPanel: React.FC = () => {
                         <div className="w-12 h-8 rounded bg-background-tertiary flex items-center justify-center flex-shrink-0">
                           <Upload size={14} className="text-text-muted group-hover:text-text-secondary transition-colors" />
                         </div>
-                        <span className="text-[11px] text-text-muted group-hover:text-text-secondary transition-colors font-medium">Add media</span>
+                        <span className="text-[11px] text-text-muted group-hover:text-text-secondary transition-colors font-medium">{t("addMedia")}</span>
                       </button>
                     ) : (
                       <div className="flex flex-col">
@@ -999,7 +1001,7 @@ export const AssetsPanel: React.FC = () => {
                         >
                           <div className="flex flex-col items-center gap-1.5">
                             <Upload size={mediaViewMode === "small" ? 16 : 20} className="text-text-muted group-hover:text-text-secondary transition-colors" />
-                            <span className="text-[10px] text-text-muted group-hover:text-text-secondary transition-colors">Add media</span>
+                            <span className="text-[10px] text-text-muted group-hover:text-text-secondary transition-colors">{t("addMedia")}</span>
                           </div>
                         </button>
                       </div>
@@ -1010,7 +1012,7 @@ export const AssetsPanel: React.FC = () => {
                 {isDragOver && (
                   <div className="absolute inset-4 border-2 border-dashed border-primary rounded-xl flex items-center justify-center bg-primary/5 pointer-events-none z-50 backdrop-blur-sm">
                     <div className="text-primary text-sm font-bold bg-background-secondary px-4 py-2 rounded-full shadow-lg">
-                      Drop files to import
+                      {t("dropFiles")}
                     </div>
                   </div>
                 )}
@@ -1394,17 +1396,17 @@ export const AssetsPanel: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 h-full bg-background-secondary relative">
         {/* Loading overlay */}
         {isImporting && (
-          <LoadingIndicator message={importProgress || "Importing media..."} />
+          <LoadingIndicator message={importProgress || t("importingMedia")} />
         )}
         
         {/* Panel Header */}
         <div className="px-5 py-4 flex items-center justify-between border-b border-border/40 shrink-0">
           <div>
             <h2 className="font-bold text-sm text-text-primary tracking-tight">
-              {ASSETS_TABS.find((t) => t.value === activeTab)?.label}
+              {tabLabel(activeTab)}
             </h2>
             <p className="text-[11px] text-text-muted mt-0.5 line-clamp-1">
-              {ASSETS_TABS.find((t) => t.value === activeTab)?.description}
+              {tabDescription(activeTab)}
             </p>
           </div>
           <div className="flex gap-1 shrink-0">
