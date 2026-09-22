@@ -173,14 +173,6 @@ export const Timeline: React.FC = () => {
     return height;
   }, [tracks, getTrackHeight]);
 
-  const trackHeightsMap = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const track of tracks) {
-      map.set(track.id, getTrackHeight(track.id));
-    }
-    return map;
-  }, [tracks, getTrackHeight]);
-
   const handleTrackDragStart = useCallback(
     (e: React.DragEvent, trackId: string) => {
       e.dataTransfer.setData("trackId", trackId);
