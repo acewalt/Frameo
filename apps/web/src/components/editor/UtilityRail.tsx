@@ -144,7 +144,7 @@ export const UtilityRail: React.FC = () => {
             <button
               className="w-7 h-7 grid place-items-center rounded hover:bg-background-tertiary text-text-muted"
               onClick={() => setHistoryOpen(false)}
-              aria-label="Close"
+              aria-label={language === "es" ? "Cerrar" : "Close"}
             >
               <X size={14} />
             </button>
