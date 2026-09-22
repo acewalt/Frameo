@@ -574,8 +574,8 @@ export const Toolbar: React.FC = () => {
   ];
 
   return (
-    <div className="h-14 border-b border-border flex items-center px-4 justify-between bg-background shrink-0 z-30 relative">
-      <div className="flex items-center gap-3 min-w-[180px]">
+    <div className="h-12 sm:h-14 border-b border-border flex items-center px-2 sm:px-4 justify-between bg-background shrink-0 z-30 relative">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 sm:min-w-[180px]">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -583,7 +583,7 @@ export const Toolbar: React.FC = () => {
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
               title={t("backHome")}
             >
-              <div className="w-7 h-7 group">
+              <div className="w-7 h-7 sm:w-7 sm:h-7 group">
                 <svg
                   viewBox="0 0 490 490"
                   fill="none"
@@ -617,12 +617,12 @@ export const Toolbar: React.FC = () => {
         </Tooltip>
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 max-w-[38vw]">
+      <div className="absolute left-1/2 -translate-x-1/2 w-[46vw] sm:w-auto max-w-[46vw] sm:max-w-[38vw] overflow-hidden">
         <ProjectSwitcher />
       </div>
 
-      <div className="flex items-center gap-2">
-        <DropdownMenu>
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="hidden sm:block"><DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors"
@@ -645,9 +645,9 @@ export const Toolbar: React.FC = () => {
               <span>{t("shortcutsHint")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu></div>
 
-        <Tooltip>
+        <div className="hidden sm:block"><Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={toggleTheme}
@@ -665,7 +665,7 @@ export const Toolbar: React.FC = () => {
           <TooltipContent>
             <p>{t("theme")}: {themeMode}</p>
           </TooltipContent>
-        </Tooltip>
+        </Tooltip></div>
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -681,7 +681,7 @@ export const Toolbar: React.FC = () => {
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip>
+        <div className="hidden sm:block"><Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => setIsRecorderOpen(true)}
@@ -694,9 +694,9 @@ export const Toolbar: React.FC = () => {
           <TooltipContent>
             <p>{t("screenRecording")}</p>
           </TooltipContent>
-        </Tooltip>
+        </Tooltip></div>
 
-        <div className="flex items-center rounded-lg border border-border bg-background-secondary p-0.5" title={t("language")}>
+        <div className="hidden sm:flex items-center rounded-lg border border-border bg-background-secondary p-0.5" title={t("language")}>
           <Languages size={13} className="mx-1.5 text-text-muted" />
           <button onClick={() => setLanguage("es")} className={`px-1.5 py-1 rounded text-[10px] ${language === "es" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>ES</button>
           <button onClick={() => setLanguage("en")} className={`px-1.5 py-1 rounded text-[10px] ${language === "en" ? "bg-primary text-white" : "text-text-muted hover:text-text-primary"}`}>EN</button>
@@ -745,11 +745,12 @@ export const Toolbar: React.FC = () => {
             <DropdownMenu open={isExportOpen} onOpenChange={setIsExportOpen}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`h-10 px-4 bg-primary hover:bg-primary-hover active:bg-primary-active text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transform hover:-translate-y-0.5 ${
+                  className={`h-9 sm:h-10 px-2.5 sm:px-4 bg-primary hover:bg-primary-hover active:bg-primary-active text-white font-bold rounded-lg flex items-center gap-1.5 sm:gap-2 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transform hover:-translate-y-0.5 ${
                     isExportOpen ? "translate-y-0 shadow-none" : ""
                   }`}
                 >
-                  <span className="text-sm tracking-wider">{t("export").toUpperCase()}</span>
+                  <FileVideo size={16} className="sm:hidden" />
+                  <span className="hidden sm:inline text-sm tracking-wider">{t("export").toUpperCase()}</span>
                   <ChevronDown
                     size={14}
                     className={`transition-transform duration-200 ${
