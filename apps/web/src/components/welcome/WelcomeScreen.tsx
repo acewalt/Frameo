@@ -409,9 +409,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
 
                   <div
                     className={`
-                    absolute bottom-4 left-1/2 -translate-x-1/2
-                    hidden sm:flex items-center gap-1 text-sm font-medium text-primary
-                    opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0
+                    hidden sm:flex mt-4 min-h-5 items-center justify-center gap-1 text-sm font-medium text-primary
+                    opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0
                     transition-all duration-200
                   `}
                   >
