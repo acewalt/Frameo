@@ -36,8 +36,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Frameo
-        run: pnpm build
+      - name: Typecheck and build Frameo
+        run: pnpm --filter @openreel/web build
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
