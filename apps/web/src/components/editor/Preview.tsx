@@ -769,6 +769,42 @@ export const Preview: React.FC = () => {
   const project = useProjectStore((state) => state.project);
   const getMediaItem = useProjectStore((state) => state.getMediaItem);
 
+  // Frameo DOM preview cache. Basic media compositions use the same persistent
+  // <video>/<img> model as Export-to-video instead of switching between
+  // paused Canvas2D, WebGPU playback and a temporary drag-only DOM layer.
+  const domMediaUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const domVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+
+  const getDomMediaUrl = useCallback(
+    (mediaId: string): string | null => {
+      const cached = domMediaUrlCacheRef.current.get(mediaId);
+      if (cached) return cached;
+
+      const mediaItem = getMediaItem(mediaId);
+      if (!mediaItem) return null;
+      if (mediaItem.blob) {
+        const url = URL.createObjectURL(mediaItem.blob);
+        domMediaUrlCacheRef.current.set(mediaId, url);
+        return url;
+      }
+      return mediaItem.originalUrl ?? null;
+    },
+    [getMediaItem],
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const url of domMediaUrlCacheRef.current.values()) {
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      }
+      domMediaUrlCacheRef.current.clear();
+      for (const video of domVideoRefs.current.values()) {
+        video.pause();
+      }
+      domVideoRefs.current.clear();
+    };
+  }, []);
+
   // Get text clips from TitleEngine
   const getTitleEngine = useEngineStore((state) => state.getTitleEngine);
   const allTextClips = useMemo(() => {
@@ -801,6 +837,55 @@ export const Preview: React.FC = () => {
   );
   const timelineTracks = project.timeline.tracks;
   const settings = project.settings;
+
+  const simpleDomPreviewEligible = useMemo(() => {
+    if (allTextClips.length > 0 || allShapeClips.length > 0 || allSubtitles.length > 0) {
+      return false;
+    }
+
+    // Dedicated audio tracks/effects still use the advanced playback engine.
+    if (
+      timelineTracks.some(
+        (track) => track.type === "audio" && track.clips.length > 0 && !track.hidden,
+      )
+    ) {
+      return false;
+    }
+
+    for (const track of timelineTracks) {
+      if (track.hidden) continue;
+
+      if ((track.transitions?.length ?? 0) > 0) return false;
+
+      if (track.type !== "video" && track.type !== "image") {
+        continue;
+      }
+
+      for (const clip of track.clips) {
+        if (clip.effects?.some((effect) => effect.enabled)) return false;
+        if (clip.audioEffects?.some((effect) => effect.enabled)) return false;
+        if ((clip.keyframes?.length ?? 0) > 0) return false;
+        if (clip.emphasisAnimation && clip.emphasisAnimation.type !== "none") return false;
+        if (clip.stabilization?.enabled) return false;
+        if (clip.transform?.crop) return false;
+        if ((clip.speed ?? 1) !== 1 || clip.reversed || clip.smoothSlowMo) return false;
+        if (clip.blendMode && clip.blendMode !== "normal") return false;
+        if (clip.automation?.volume?.length || clip.automation?.pan?.length) return false;
+      }
+    }
+
+    return timelineTracks.some(
+      (track) =>
+        !track.hidden &&
+        (track.type === "video" || track.type === "image") &&
+        track.clips.length > 0,
+    );
+  }, [
+    timelineTracks,
+    allTextClips,
+    allShapeClips,
+    allSubtitles,
+  ]);
 
   const previewFrameSize = useMemo(() => {
     if (videoAreaSize.width <= 0 || videoAreaSize.height <= 0) {
@@ -878,6 +963,254 @@ export const Preview: React.FC = () => {
   }, [isScrubbing]);
 
   const isPlaying = playbackState === "playing";
+
+  const domPreviewItems = useMemo(() => {
+    if (!simpleDomPreviewEligible) return [];
+
+    const items: Array<{
+      clip: (typeof timelineTracks)[number]["clips"][number];
+      track: (typeof timelineTracks)[number];
+      trackIndex: number;
+      clipIndex: number;
+      mediaType: "video" | "image";
+      src: string;
+    }> = [];
+
+    timelineTracks.forEach((track, trackIndex) => {
+      if (
+        track.hidden ||
+        (track.type !== "video" && track.type !== "image")
+      ) {
+        return;
+      }
+
+      track.clips.forEach((clip, clipIndex) => {
+        if (
+          playheadPosition < clip.startTime ||
+          playheadPosition >= clip.startTime + clip.duration
+        ) {
+          return;
+        }
+
+        const mediaItem = getMediaItem(clip.mediaId);
+        const src = getDomMediaUrl(clip.mediaId);
+        if (
+          !mediaItem ||
+          !src ||
+          (mediaItem.type !== "video" && mediaItem.type !== "image")
+        ) {
+          return;
+        }
+
+        items.push({
+          clip,
+          track,
+          trackIndex,
+          clipIndex,
+          mediaType: mediaItem.type,
+          src,
+        });
+      });
+    });
+
+    return items;
+  }, [
+    simpleDomPreviewEligible,
+    timelineTracks,
+    playheadPosition,
+    getMediaItem,
+    getDomMediaUrl,
+    project.modifiedAt,
+  ]);
+
+  const getDomClipStyle = useCallback(
+    (
+      item: (typeof domPreviewItems)[number],
+    ): React.CSSProperties => {
+      const { clip, trackIndex, clipIndex } = item;
+      const mediaItem = getMediaItem(clip.mediaId);
+      const sourceWidth = mediaItem?.metadata?.width || settings.width;
+      const sourceHeight = mediaItem?.metadata?.height || settings.height;
+      const sourceAspect = sourceWidth / Math.max(1, sourceHeight);
+      const canvasAspect = settings.width / Math.max(1, settings.height);
+
+      let baseWidthPct = 100;
+      let baseHeightPct = 100;
+      const fitMode = clip.transform?.fitMode ?? "contain";
+
+      if (fitMode === "none") {
+        baseWidthPct = (sourceWidth / settings.width) * 100;
+        baseHeightPct = (sourceHeight / settings.height) * 100;
+      } else if (fitMode === "stretch") {
+        baseWidthPct = 100;
+        baseHeightPct = 100;
+      } else if (fitMode === "cover") {
+        if (sourceAspect > canvasAspect) {
+          baseHeightPct = 100;
+          baseWidthPct = (sourceAspect / canvasAspect) * 100;
+        } else {
+          baseWidthPct = 100;
+          baseHeightPct = (canvasAspect / sourceAspect) * 100;
+        }
+      } else {
+        // contain — same geometry used by the selection bounds/canvas renderer.
+        if (sourceAspect > canvasAspect) {
+          baseWidthPct = 100;
+          baseHeightPct = (canvasAspect / sourceAspect) * 100;
+        } else {
+          baseHeightPct = 100;
+          baseWidthPct = (sourceAspect / canvasAspect) * 100;
+        }
+      }
+
+      const baseTransform = clip.transform || DEFAULT_TRANSFORM;
+      const live =
+        interactionTargetIdRef.current === clip.id && liveTransform
+          ? liveTransform
+          : null;
+      const position = live?.position ?? baseTransform.position;
+      const scale = live?.scale ?? baseTransform.scale;
+      const rotation = live?.rotation ?? baseTransform.rotation ?? 0;
+
+      return {
+        position: "absolute",
+        left: `${50 + (position.x / settings.width) * 100}%`,
+        top: `${50 + (position.y / settings.height) * 100}%`,
+        width: `${baseWidthPct}%`,
+        height: `${baseHeightPct}%`,
+        maxWidth: "none",
+        maxHeight: "none",
+        objectFit: "fill",
+        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale.x}, ${scale.y})`,
+        transformOrigin: "50% 50%",
+        opacity: baseTransform.opacity ?? 1,
+        zIndex: (timelineTracks.length - trackIndex) * 100 + clipIndex,
+        willChange: isPlaying || live ? "transform" : undefined,
+      };
+    },
+    [
+      getMediaItem,
+      settings.width,
+      settings.height,
+      timelineTracks.length,
+      liveTransform,
+      isPlaying,
+    ],
+  );
+
+  useEffect(() => {
+    if (!simpleDomPreviewEligible) {
+      for (const video of domVideoRefs.current.values()) {
+        video.pause();
+      }
+      return;
+    }
+
+    const activeIds = new Set(domPreviewItems.map((item) => item.clip.id));
+    const anySolo = timelineTracks.some(
+      (track) =>
+        track.type === "video" &&
+        !track.hidden &&
+        track.solo,
+    );
+
+    for (const [clipId, video] of domVideoRefs.current.entries()) {
+      if (!activeIds.has(clipId)) {
+        video.pause();
+        continue;
+      }
+
+      const item = domPreviewItems.find((candidate) => candidate.clip.id === clipId);
+      if (!item) continue;
+
+      const wanted =
+        (item.clip.inPoint || 0) +
+        Math.max(0, playheadPosition - item.clip.startTime);
+      const tolerance = isPlaying ? 0.18 : 0.025;
+
+      video.playbackRate = playbackRate;
+      video.muted =
+        isMuted ||
+        item.track.muted ||
+        (anySolo && !item.track.solo);
+      video.volume = Math.max(0, Math.min(1, item.clip.volume ?? 1));
+
+      if (
+        video.readyState >= HTMLMediaElement.HAVE_METADATA &&
+        Number.isFinite(wanted) &&
+        Math.abs((video.currentTime || 0) - wanted) > tolerance
+      ) {
+        try {
+          video.currentTime = wanted;
+        } catch {
+          // Metadata can race on the first render; loadedmetadata will resync.
+        }
+      }
+
+      if (isPlaying) {
+        if (video.paused) {
+          void video.play().catch(() => undefined);
+        }
+      } else {
+        video.pause();
+      }
+    }
+  }, [
+    simpleDomPreviewEligible,
+    domPreviewItems,
+    playheadPosition,
+    isPlaying,
+    playbackRate,
+    isMuted,
+    timelineTracks,
+  ]);
+
+  // Export-to-video style preview clock. The DOM media elements are the visual
+  // playback engine for basic compositions, so no CanvasSink/WebGPU frame loop
+  // is needed and pause/play uses exactly the same transforms.
+  useEffect(() => {
+    if (!simpleDomPreviewEligible || !isPlaying) return;
+
+    let rafId = 0;
+    let originTime = playheadPositionRef.current;
+    let originNow = performance.now();
+
+    const tick = () => {
+      const now = performance.now();
+      let next =
+        originTime +
+        ((now - originNow) / 1000) * playbackRate;
+
+      // Respect an external seek while playing instead of snapping back to the
+      // previous wall-clock origin.
+      const observed = playheadPositionRef.current;
+      if (Math.abs(observed - next) > 0.45) {
+        originTime = observed;
+        originNow = now;
+        next = observed;
+      }
+
+      if (next >= actualEndTime) {
+        setPlayheadPosition(0);
+        startPositionRef.current = 0;
+        pause();
+        return;
+      }
+
+      setPlayheadPosition(next);
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [
+    simpleDomPreviewEligible,
+    isPlaying,
+    playbackRate,
+    actualEndTime,
+    pause,
+    setPlayheadPosition,
+  ]);
 
   const motionPathClip = React.useMemo(() => {
     if (!motionPathMode || !motionPathClipId) return null;
@@ -3169,6 +3502,12 @@ export const Preview: React.FC = () => {
   );
 
   useEffect(() => {
+    if (simpleDomPreviewEligible) {
+      cleanupPlaybackResources();
+      cleanupAudioResources();
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) {
       return;
@@ -4517,6 +4856,7 @@ export const Preview: React.FC = () => {
     isMuted,
     settings.width,
     settings.height,
+    simpleDomPreviewEligible,
   ]);
 
   const lastModifiedAtRef = useRef<number>(project.modifiedAt);
@@ -4528,6 +4868,7 @@ export const Preview: React.FC = () => {
   const directRenderRequestSeqRef = useRef(0);
 
   useEffect(() => {
+    if (simpleDomPreviewEligible) return;
     if (isPlaying) return;
     if (isScrubbing) {
       releaseScrubVideoElements();
@@ -4600,6 +4941,7 @@ export const Preview: React.FC = () => {
     releaseScrubVideoElements,
     project.modifiedAt,
     isDark,
+    simpleDomPreviewEligible,
   ]);
 
   const [previewInvalidateCounter, setPreviewInvalidateCounter] = useState(0);
@@ -4670,6 +5012,7 @@ export const Preview: React.FC = () => {
   }, [interactionMediaItem?.blob]);
 
   const canUseRealtimeDomTransform = useMemo(() => {
+    if (simpleDomPreviewEligible) return false;
     const clip = interactionMediaClip;
     const mediaItem = interactionMediaItem;
     if (!clip || !mediaItem?.blob || isPlaying || cropMode) return false;
@@ -4753,6 +5096,7 @@ export const Preview: React.FC = () => {
     allTextClips,
     allShapeClips,
     allSubtitles,
+    simpleDomPreviewEligible,
   ]);
 
   useEffect(() => {
@@ -6221,13 +6565,65 @@ export const Preview: React.FC = () => {
             className="w-full h-full object-contain bg-black"
             style={{
               cursor: hoveredGraphicClipId && !isPlaying ? "pointer" : "default",
-              opacity: 1,
+              opacity: simpleDomPreviewEligible ? 0 : 1,
             }}
           />
 
+          {simpleDomPreviewEligible && (
+            <div className="absolute inset-0 overflow-hidden bg-black pointer-events-none z-[5]">
+              {domPreviewItems.map((item) =>
+                item.mediaType === "video" ? (
+                  <video
+                    key={item.clip.id}
+                    ref={(element) => {
+                      if (element) {
+                        domVideoRefs.current.set(item.clip.id, element);
+                      } else {
+                        const previous = domVideoRefs.current.get(item.clip.id);
+                        previous?.pause();
+                        domVideoRefs.current.delete(item.clip.id);
+                      }
+                    }}
+                    src={item.src}
+                    playsInline
+                    preload="auto"
+                    draggable={false}
+                    style={getDomClipStyle(item)}
+                    onLoadedMetadata={(event) => {
+                      const video = event.currentTarget;
+                      const wanted =
+                        (item.clip.inPoint || 0) +
+                        Math.max(0, playheadPositionRef.current - item.clip.startTime);
+                      if (Number.isFinite(wanted)) {
+                        try {
+                          video.currentTime = wanted;
+                        } catch {
+                          // Browser will retry through the sync effect.
+                        }
+                      }
+                      if (isPlayingRef.current) {
+                        void video.play().catch(() => undefined);
+                      }
+                    }}
+                  />
+                ) : (
+                  <img
+                    key={item.clip.id}
+                    src={item.src}
+                    alt=""
+                    draggable={false}
+                    className="select-none"
+                    style={getDomClipStyle(item)}
+                  />
+                ),
+              )}
+            </div>
+          )}
+
           {/* Frameo fast free-transform preview: mirrors Export-to-video by
               transforming the actual media element directly while dragging. */}
-          {canUseRealtimeDomTransform &&
+          {!simpleDomPreviewEligible &&
+            canUseRealtimeDomTransform &&
             (interactionMode !== "none" || liveTransform !== null) &&
             interactionMediaUrl &&
             clipBounds &&
