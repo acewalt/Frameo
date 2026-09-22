@@ -1016,24 +1016,30 @@ export const AssetsPanel: React.FC = () => {
                       {
                         type: "rectangle" as ShapeType,
                         icon: Square,
-                        label: "Rectangle",
+                        label: language === "es" ? "Rectángulo" : "Rectangle",
                       },
-                      { type: "circle" as ShapeType, icon: Circle, label: "Circle" },
+                      { type: "circle" as ShapeType, icon: Circle, label: language === "es" ? "Círculo" : "Circle" },
+                      { type: "ellipse" as ShapeType, icon: Circle, label: language === "es" ? "Elipse" : "Ellipse" },
                       {
                         type: "triangle" as ShapeType,
                         icon: Triangle,
-                        label: "Triangle",
+                        label: language === "es" ? "Triángulo" : "Triangle",
                       },
-                      { type: "star" as ShapeType, icon: Star, label: "Star" },
+                      { type: "star" as ShapeType, icon: Star, label: language === "es" ? "Estrella" : "Star" },
                       {
                         type: "arrow" as ShapeType,
                         icon: ArrowRight,
-                        label: "Arrow",
+                        label: language === "es" ? "Flecha" : "Arrow",
                       },
                       {
                         type: "polygon" as ShapeType,
                         icon: Hexagon,
-                        label: "Polygon",
+                        label: language === "es" ? "Polígono" : "Polygon",
+                      },
+                      {
+                        type: "line" as ShapeType,
+                        icon: ArrowRight,
+                        label: language === "es" ? "Línea" : "Line",
                       },
                     ].map((shape) => (
                       <button
@@ -1107,7 +1113,7 @@ export const AssetsPanel: React.FC = () => {
                       className="text-text-secondary group-hover:text-primary transition-colors"
                     />
                     <span className="text-xs text-text-secondary group-hover:text-text-primary">
-                      Import SVG File
+                      {language === "es" ? "Importar archivo SVG" : "Import SVG File"}
                     </span>
                   </button>
                 </div>
@@ -1183,7 +1189,7 @@ export const AssetsPanel: React.FC = () => {
                         !tracksBefore.some((bt) => bt.id === t.id),
                     );
                     if (newTextTrack) {
-                      createTextClip(newTextTrack.id, 0, "New Title");
+                      createTextClip(newTextTrack.id, 0, language === "es" ? "Nuevo título" : "New Title");
                     }
                   }}
                   className="w-full py-4 bg-background-tertiary rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
@@ -1192,14 +1198,14 @@ export const AssetsPanel: React.FC = () => {
                     Add Title
                   </span>
                   <p className="text-xs text-text-muted mt-1">
-                    Click to add text to timeline
+                    {language === "es" ? "Haz clic para añadir texto a la línea de tiempo" : "Click to add text to timeline"}
                   </p>
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     {
-                      name: "Heading",
-                      text: "Heading",
+                      name: language === "es" ? "Encabezado" : "Heading",
+                      text: language === "es" ? "Encabezado" : "Heading",
                       style: {
                         fontSize: 72,
                         fontWeight: 700 as const,
@@ -1208,8 +1214,8 @@ export const AssetsPanel: React.FC = () => {
                       },
                     },
                     {
-                      name: "Subtitle",
-                      text: "Subtitle text",
+                      name: language === "es" ? "Subtítulo" : "Subtitle",
+                      text: language === "es" ? "Texto de subtítulo" : "Subtitle text",
                       style: {
                         fontSize: 36,
                         fontWeight: 400 as const,
@@ -1218,8 +1224,8 @@ export const AssetsPanel: React.FC = () => {
                       },
                     },
                     {
-                      name: "Lower Third",
-                      text: "Name Here",
+                      name: language === "es" ? "Tercio inferior" : "Lower Third",
+                      text: language === "es" ? "Nombre aquí" : "Name Here",
                       style: {
                         fontSize: 32,
                         fontWeight: 600 as const,
@@ -1229,8 +1235,8 @@ export const AssetsPanel: React.FC = () => {
                       },
                     },
                     {
-                      name: "Caption",
-                      text: "Caption text here",
+                      name: language === "es" ? "Texto inferior" : "Caption",
+                      text: language === "es" ? "Texto aquí" : "Caption text here",
                       style: {
                         fontSize: 24,
                         fontWeight: 400 as const,
@@ -1406,7 +1412,7 @@ export const AssetsPanel: React.FC = () => {
               <IconButton
                 icon={Plus}
                 onClick={triggerFileInput}
-                title="Import media"
+                title={language === "es" ? "Importar medios" : "Import media"}
               />
             )}
           </div>
