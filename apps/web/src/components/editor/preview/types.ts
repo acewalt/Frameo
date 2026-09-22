@@ -1,6 +1,6 @@
 export type HandlePosition = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
-export type InteractionMode = "none" | "move" | "resize";
+export type InteractionMode = "none" | "move" | "resize" | "rotate";
 
 export interface ClipTransform {
   position: { x: number; y: number };
