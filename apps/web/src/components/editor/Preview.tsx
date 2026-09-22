@@ -1202,6 +1202,7 @@ export const Preview: React.FC = () => {
     let rafId = 0;
     let originTime = domPlayheadRef.current;
     let originNow = performance.now();
+    let lastUiUpdate = 0;
 
     const tick = () => {
       const now = performance.now();
@@ -1224,7 +1225,13 @@ export const Preview: React.FC = () => {
         return;
       }
 
-      setPlayheadPosition(next);
+      // The real <video> elements animate independently. Updating React at
+      // ~30 fps is enough for the playhead and avoids re-rendering the whole
+      // editor at display refresh rate.
+      if (now - lastUiUpdate >= 33) {
+        lastUiUpdate = now;
+        setPlayheadPosition(next);
+      }
       rafId = requestAnimationFrame(tick);
     };
 
