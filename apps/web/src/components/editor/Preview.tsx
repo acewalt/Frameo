@@ -1742,7 +1742,7 @@ export const Preview: React.FC = () => {
 
   // Render a single frame using MediaBunny (for scrubbing/seeking)
   const renderFrameDirectly = useCallback(
-    async (time: number): Promise<boolean> => {
+    async (time: number, excludeClipId?: string): Promise<boolean> => {
       const canvas = canvasRef.current;
       if (!canvas) return false;
 
@@ -1774,7 +1774,9 @@ export const Preview: React.FC = () => {
       const hasVideoContent = videoTracks.some((track) =>
         track.clips.some(
           (clip) =>
-            time >= clip.startTime && time < clip.startTime + clip.duration,
+            clip.id !== excludeClipId &&
+            time >= clip.startTime &&
+            time < clip.startTime + clip.duration,
         ),
       );
 
@@ -1993,6 +1995,7 @@ export const Preview: React.FC = () => {
         for (const { track } of allRenderableTracks) {
           if (track.type === "video" || track.type === "image") {
             for (const clip of track.clips) {
+              if (clip.id === excludeClipId) continue;
               const clipStart = clip.startTime;
               const clipEnd = clip.startTime + clip.duration;
 
@@ -4619,24 +4622,61 @@ export const Preview: React.FC = () => {
       return false;
     }
 
-    let activeMediaCount = 0;
-    for (const track of timelineTracks) {
-      if ((track.type !== "video" && track.type !== "image") || track.hidden) continue;
-      for (const candidate of track.clips) {
+    const selectedTrackIndex = timelineTracks.findIndex((track) =>
+      track.clips.some((candidate) => candidate.id === clip.id),
+    );
+    if (selectedTrackIndex < 0) return false;
+
+    // The DOM media element is rendered above the canvas. It is therefore safe
+    // when no OTHER active visual layer should appear above the selected clip.
+    // Layers below stay on the canvas and remain fully composited.
+    for (let trackIndex = 0; trackIndex < timelineTracks.length; trackIndex += 1) {
+      const track = timelineTracks[trackIndex];
+      if (track.hidden) continue;
+
+      if (track.type === "video" || track.type === "image") {
+        for (const candidate of track.clips) {
+          if (
+            candidate.id !== clip.id &&
+            playheadPosition >= candidate.startTime &&
+            playheadPosition < candidate.startTime + candidate.duration
+          ) {
+            if (trackIndex <= selectedTrackIndex) return false;
+          }
+        }
+      }
+
+      if (trackIndex < selectedTrackIndex && track.type === "text") {
         if (
-          playheadPosition >= candidate.startTime &&
-          playheadPosition < candidate.startTime + candidate.duration
+          allTextClips.some(
+            (candidate) =>
+              candidate.trackId === track.id &&
+              playheadPosition >= candidate.startTime &&
+              playheadPosition < candidate.startTime + candidate.duration,
+          )
         ) {
-          activeMediaCount += 1;
-          if (candidate.id !== clip.id) return false;
+          return false;
+        }
+      }
+
+      if (trackIndex < selectedTrackIndex && track.type === "graphics") {
+        if (
+          allShapeClips.some(
+            (candidate) =>
+              candidate.trackId === track.id &&
+              playheadPosition >= candidate.startTime &&
+              playheadPosition < candidate.startTime + candidate.duration,
+          )
+        ) {
+          return false;
         }
       }
     }
-    if (activeMediaCount !== 1) return false;
 
-    if (getActiveTextClips(allTextClips, playheadPosition).length > 0) return false;
-    if (getActiveShapeClips(allShapeClips, playheadPosition).length > 0) return false;
-    if (getActiveSubtitles(allSubtitles, playheadPosition).length > 0) return false;
+    // Subtitles are global top-level overlays; keep them above the media.
+    if (getActiveSubtitles(allSubtitles, playheadPosition).length > 0) {
+      return false;
+    }
 
     return true;
   }, [
@@ -5198,6 +5238,9 @@ export const Preview: React.FC = () => {
         (Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180) /
         Math.PI;
 
+      if (target === "clip" && canUseRealtimeDomTransform) {
+        void renderFrameDirectly(playheadPosition, id);
+      }
       isInteractingRef.current = true;
       setInteractionMode("rotate");
       setInteractionTargetType(target);
@@ -5211,7 +5254,7 @@ export const Preview: React.FC = () => {
         id,
       };
     },
-    [],
+    [canUseRealtimeDomTransform, renderFrameDirectly, playheadPosition],
   );
 
   const handleHandleMouseDown = useCallback(
@@ -5231,6 +5274,9 @@ export const Preview: React.FC = () => {
         anchor: { x: 0.5, y: 0.5 },
       };
 
+      if (canUseRealtimeDomTransform) {
+        void renderFrameDirectly(playheadPosition, clip.id);
+      }
       isInteractingRef.current = true;
       setInteractionMode("resize");
       setActiveHandle(handle);
@@ -5247,7 +5293,13 @@ export const Preview: React.FC = () => {
         },
       };
     },
-    [selectedClip, clipAtPlayhead],
+    [
+      selectedClip,
+      clipAtPlayhead,
+      canUseRealtimeDomTransform,
+      renderFrameDirectly,
+      playheadPosition,
+    ],
   );
 
   const handleClipMouseDown = useCallback(
@@ -5267,6 +5319,9 @@ export const Preview: React.FC = () => {
         anchor: { x: 0.5, y: 0.5 },
       };
 
+      if (canUseRealtimeDomTransform) {
+        void renderFrameDirectly(playheadPosition, clip.id);
+      }
       isInteractingRef.current = true;
       setInteractionMode("move");
       setInteractionTargetType("clip");
@@ -5282,7 +5337,13 @@ export const Preview: React.FC = () => {
         },
       };
     },
-    [selectedClip, clipAtPlayhead],
+    [
+      selectedClip,
+      clipAtPlayhead,
+      canUseRealtimeDomTransform,
+      renderFrameDirectly,
+      playheadPosition,
+    ],
   );
 
   const handleTextClipMouseDown = useCallback(
@@ -6096,12 +6157,7 @@ export const Preview: React.FC = () => {
             className="w-full h-full object-contain bg-black"
             style={{
               cursor: hoveredGraphicClipId && !isPlaying ? "pointer" : "default",
-              opacity:
-                canUseRealtimeDomTransform &&
-                (interactionMode !== "none" || liveTransform !== null) &&
-                interactionMediaUrl
-                  ? 0
-                  : 1,
+              opacity: 1,
             }}
           />
 
