@@ -596,16 +596,16 @@ export const Toolbar: React.FC = () => {
   ];
 
   return (
-    <div className="h-16 border-b border-border flex items-center px-6 justify-between bg-background shrink-0 z-30 relative">
-      <div className="flex items-center gap-4">
+    <div className="h-14 border-b border-border flex items-center px-4 justify-between bg-background shrink-0 z-30 relative">
+      <div className="flex items-center gap-3 min-w-[180px]">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => navigate("welcome")}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
               title={t("backHome")}
             >
-              <div className="w-8 h-8 group">
+              <div className="w-7 h-7 group">
                 <svg
                   viewBox="0 0 490 490"
                   fill="none"
@@ -616,117 +616,34 @@ export const Toolbar: React.FC = () => {
                     d="M245 24.5C123.223 24.5 24.5 123.223 24.5 245s98.723 220.5 220.5 220.5 220.5-98.723 220.5-220.5S366.777 24.5 245 24.5Z"
                     stroke="currentColor"
                     strokeWidth="30.625"
-                    className="opacity-100"
                   />
-                  <g className="origin-center group-hover:rotate-90 transition-transform duration-500 ease-out">
-                    <path
-                      d="M245 98v73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M392 245h-73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M245 392v-73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M98 245h73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m348.941 141.059-51.965 51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m348.941 348.941-51.965-51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m141.059 348.941 51.965-51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m141.059 141.059 51.965 51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
+                  <g>
+                    <path d="M245 98v73.5" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="M392 245h-73.5" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="M245 392v-73.5" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="M98 245h73.5" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="m348.941 141.059-51.965 51.965" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="m348.941 348.941-51.965-51.965" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="m141.059 348.941 51.965-51.965" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
+                    <path d="m141.059 141.059 51.965 51.965" stroke="currentColor" strokeWidth="24.5" strokeLinecap="round" />
                   </g>
-                  <path
-                    d="M294 245a49 49 0 0 1-49 49 49 49 0 0 1-49-49 49 49 0 0 1 98 0"
-                    fill="currentColor"
-                    className="group-hover:fill-white transition-colors duration-300"
-                  />
+                  <path d="M294 245a49 49 0 0 1-49 49 49 49 0 0 1-49-49 49 49 0 0 1 98 0" fill="currentColor" />
                 </svg>
               </div>
-              <span className="text-lg font-medium text-text-primary tracking-wide hidden lg:block">
+              <span className="text-sm font-semibold text-text-primary tracking-wide hidden md:block">
                 Frameo
               </span>
             </button>
           </TooltipTrigger>
           <TooltipContent>{t("backHome")}</TooltipContent>
         </Tooltip>
-        <div className="h-6 w-px bg-border hidden md:block" />
+      </div>
+
+      <div className="absolute left-1/2 -translate-x-1/2 max-w-[38vw]">
         <ProjectSwitcher />
       </div>
 
-      <div className="flex-1 max-w-2xl mx-12 relative group">
-        <div
-          className={`absolute inset-0 bg-primary/20 rounded-xl blur-md transition-opacity duration-300 ${
-            hasSelectedClip
-              ? "opacity-100 animate-pulse"
-              : "opacity-0 group-hover:opacity-100"
-          }`}
-        />
-        <button
-          onClick={handleSearch}
-          className={`relative w-full bg-background-secondary border rounded-xl h-10 flex items-center px-4 gap-3 transition-all text-left shadow-inner ${
-            hasSelectedClip
-              ? "border-primary/50 ring-1 ring-primary/30"
-              : "border-border group-hover:border-primary/50"
-          }`}
-        >
-          <Search
-            size={16}
-            className={`transition-colors ${
-              hasSelectedClip
-                ? "text-primary"
-                : "text-text-muted group-hover:text-primary"
-            }`}
-          />
-          <span
-            className={`flex-1 text-sm transition-colors ${
-              hasSelectedClip
-                ? "text-text-secondary"
-                : "text-text-muted group-hover:text-text-secondary"
-            }`}
-          >
-            {hasSelectedClip ? t("searchSelected") : t("searchTools")}
-          </span>
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-background-tertiary">
-            <Command size={10} className="text-text-muted" />
-            <span className="text-[10px] text-text-muted font-mono">K</span>
-          </div>
-        </button>
-      </div>
-
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -783,74 +700,6 @@ export const Toolbar: React.FC = () => {
           </TooltipTrigger>
           <TooltipContent>
             <p>{t("settings")}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => useUIStore.getState().openModal("scriptView")}
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors"
-            >
-              <FileCode size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("projectJson")}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={toggleKeyframeEditor}
-              className={`p-2 rounded-lg transition-colors ${
-                keyframeEditorOpen
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <Diamond size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("keyframeEditor")}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => togglePanel("audioMixer")}
-              className={`p-2 rounded-lg transition-colors ${
-                panels.audioMixer?.visible
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <Music size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("audioMixer")}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-              className={`p-2 rounded-lg transition-colors ${
-                isHistoryOpen
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <History size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("undoRedo")}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -996,7 +845,7 @@ export const Toolbar: React.FC = () => {
                         {t("customExport")}
                       </div>
                       <div className="text-xs text-text-muted mt-0.5">
-                        Full export settings
+                        {language === "es" ? "Todos los ajustes de exportación" : "Full export settings"}
                       </div>
                     </div>
                     <Settings
