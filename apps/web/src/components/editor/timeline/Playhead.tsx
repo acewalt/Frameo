@@ -109,8 +109,9 @@ export const Playhead: React.FC<PlayheadProps> = ({
       ref={rootRef}
       className="absolute top-0 bottom-0 left-20 sm:left-32 z-[70] pointer-events-none"
       style={{
-        transform: `translateX(${pixelPosition}px)`,
+        transform: `translate3d(${pixelPosition}px, 0, 0)`,
         willChange: "transform",
+        transition: isDragging ? "none" : "transform 70ms linear",
       }}
     >
       <div
