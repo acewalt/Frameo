@@ -605,12 +605,15 @@ export type AudioEffectType =
   | "fadeOut";
 export type TransitionType =
   | "crossfade"
+  | "dissolve"
   | "dipToBlack"
   | "dipToWhite"
   | "wipe"
   | "slide"
   | "zoom"
-  | "push";
+  | "push"
+  | "blur"
+  | "iris";
 
 // Curve point for color grading
 export interface CurvePoint {
@@ -762,6 +765,10 @@ export interface TransitionParams {
     duration: number; // In seconds
     curve: "linear" | "ease" | "ease-in" | "ease-out";
   };
+  dissolve: {
+    duration: number;
+    curve: "linear" | "ease" | "ease-in" | "ease-out";
+  };
   dipToBlack: {
     duration: number;
     holdDuration: number; // Time at full black
@@ -788,5 +795,14 @@ export interface TransitionParams {
   push: {
     duration: number;
     direction: "left" | "right" | "up" | "down";
+  };
+  blur: {
+    duration: number;
+    amount: number;
+  };
+  iris: {
+    duration: number;
+    shape: "circle" | "rectangle" | "diamond" | "star";
+    invert: boolean;
   };
 }
