@@ -379,7 +379,7 @@ export class ExportEngine {
         bitrate: fullSettings.bitrate ? fullSettings.bitrate * 1000 : QUALITY_MEDIUM,
         keyFrameInterval:
           fullSettings.keyframeInterval / fullSettings.frameRate,
-        hardwareAcceleration: "prefer-software",
+        hardwareAcceleration: "prefer-hardware",
       });
       const audioSource = new AudioBufferSource({
         codec: audioCodecResult.codec as "aac" | "opus" | "mp3",
@@ -422,6 +422,11 @@ export class ExportEngine {
         }
       }
 
+      // Cache cleanup once per ~second instead of every five frames.
+      // The original cadence caused repeated decoder/cache churn and made
+      // browser exports substantially slower on medium and long timelines.
+      const cacheClearInterval = Math.max(30, Math.round(fullSettings.frameRate));
+
       for (let frame = 0; frame < totalFrames; frame++) {
         if (this.abortController.signal.aborted) {
           throw this.createError(
@@ -463,13 +468,15 @@ export class ExportEngine {
 
         this.currentExport!.framesRendered = frame + 1;
 
-        if ((frame + 1) % 5 === 0) {
+        if ((frame + 1) % cacheClearInterval === 0) {
           this.videoEngine?.clearVideoElementCache();
           this.videoEngine?.clearCache();
           try {
             mediaEngine.clearFrameCache();
           } catch {}
-          await new Promise((resolve) => setTimeout(resolve, 2));
+          // Yield to the UI without adding an artificial multi-millisecond
+          // stall every few frames.
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
 
         yield this.createProgress(
