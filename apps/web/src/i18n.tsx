@@ -89,6 +89,16 @@ const messages = {
     importedMedia: "Imported media",
     mediaLibrary: "Project Media",
     background: "Background",
+    ideaTitle: "What do you want to create?",
+    ideaSubtitle: "Describe the project in a few words. Frameo will use it as the project name; nothing is sent anywhere.",
+    ideaPlaceholder: "Example: Short character animation for Instagram...",
+    continue: "Continue",
+    skip: "Skip",
+    editVideoIdea: "Edit a video",
+    socialIdea: "Social media video",
+    montageIdea: "Montage / reel",
+    animationIdea: "Animation",
+    chooseFormat: "Choose the canvas format",
 
   },
   es: {
@@ -177,6 +187,16 @@ const messages = {
     importedMedia: "Medios importados",
     mediaLibrary: "Medios del proyecto",
     background: "Fondo",
+    ideaTitle: "¿Qué quieres crear?",
+    ideaSubtitle: "Describe el proyecto en pocas palabras. Frameo lo usará como nombre del proyecto; no se envía a ningún servidor.",
+    ideaPlaceholder: "Ejemplo: Animación corta de personaje para Instagram...",
+    continue: "Continuar",
+    skip: "Omitir",
+    editVideoIdea: "Editar un video",
+    socialIdea: "Video para redes",
+    montageIdea: "Montaje / reel",
+    animationIdea: "Animación",
+    chooseFormat: "Elige el formato del canvas",
 
   },
 } as const;
