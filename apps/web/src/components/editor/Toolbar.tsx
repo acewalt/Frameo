@@ -194,12 +194,12 @@ export const Toolbar: React.FC = () => {
         setExportState((prev) => ({
           ...prev,
           progress: value.progress * 100,
-          phase: value.phase === "complete" ? "Complete!" : `${value.phase}...`,
+          phase: value.phase === "complete" ? (language === "es" ? "¡Completado!" : "Complete!") : `${value.phase}...`,
         }));
       }
 
       if (finalResult?.success) {
-        setExportState((prev) => ({ ...prev, complete: true, phase: "Saved!" }));
+        setExportState((prev) => ({ ...prev, complete: true, phase: language === "es" ? "¡Guardado!" : "Saved!" }));
         track(AnalyticsEvents.PROJECT_EXPORTED, {
           format: videoSettings.format ?? "mp4",
           codec: videoSettings.codec ?? "h264",
@@ -307,7 +307,7 @@ export const Toolbar: React.FC = () => {
           setExportState({
             isExporting: true,
             progress: 0,
-            phase: "Initializing...",
+            phase: language === "es" ? "Inicializando..." : "Initializing...",
             error: null,
             complete: false,
           });
@@ -334,7 +334,7 @@ export const Toolbar: React.FC = () => {
             setExportState((prev) => ({
               ...prev,
               progress: value.progress * 100,
-              phase: value.phase === "complete" ? "Complete!" : `${value.phase}...`,
+              phase: value.phase === "complete" ? (language === "es" ? "¡Completado!" : "Complete!") : `${value.phase}...`,
             }));
           }
 
@@ -351,7 +351,7 @@ export const Toolbar: React.FC = () => {
               document.body.removeChild(a);
               URL.revokeObjectURL(url);
             }
-            setExportState((prev) => ({ ...prev, complete: true, phase: "Saved!" }));
+            setExportState((prev) => ({ ...prev, complete: true, phase: language === "es" ? "¡Guardado!" : "Saved!" }));
             track(AnalyticsEvents.PROJECT_EXPORTED, {
               format: "wav",
               duration: project.timeline?.duration ?? 0,
@@ -386,7 +386,7 @@ export const Toolbar: React.FC = () => {
           setExportState({
             isExporting: true,
             progress: 0,
-            phase: "Initializing...",
+            phase: language === "es" ? "Inicializando..." : "Initializing...",
             error: null,
             complete: false,
           });
@@ -434,7 +434,7 @@ export const Toolbar: React.FC = () => {
         setExportState({
           isExporting: true,
           progress: 0,
-          phase: "Initializing...",
+          phase: language === "es" ? "Inicializando..." : "Initializing...",
           error: null,
           complete: false,
         });
@@ -1040,7 +1040,7 @@ export const Toolbar: React.FC = () => {
           />
           <div className="fixed top-16 right-0 bottom-0 w-80 bg-background-secondary border-l border-border z-50 shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-3 border-b border-border">
-              <span className="text-sm font-medium text-text-primary">Action History</span>
+              <span className="text-sm font-medium text-text-primary">{language === "es" ? "Historial de acciones" : "Action History"}</span>
               <button
                 onClick={() => setIsHistoryOpen(false)}
                 className="p-1.5 rounded hover:bg-background-tertiary text-text-muted hover:text-text-primary transition-colors"
