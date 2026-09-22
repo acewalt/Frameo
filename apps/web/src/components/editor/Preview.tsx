@@ -192,12 +192,43 @@ const applyStabilizationTransform = (
   ) as ClipTransform;
 };
 
+const getGpuTransformForBitmap = (
+  bitmap: ImageBitmap,
+  transform: ClipTransform,
+  canvasWidth: number,
+  canvasHeight: number,
+): ClipTransform => {
+  const cropWidth = transform.crop?.width ?? 1;
+  const cropHeight = transform.crop?.height ?? 1;
+  const sourceWidth = Math.max(1, bitmap.width * cropWidth);
+  const sourceHeight = Math.max(1, bitmap.height * cropHeight);
+  const sourceAspect = sourceWidth / sourceHeight;
+  const canvasAspect = canvasWidth / canvasHeight;
+
+  let containScaleX = 1;
+  let containScaleY = 1;
+
+  if (sourceAspect > canvasAspect) {
+    containScaleY = (canvasWidth / sourceAspect) / canvasHeight;
+  } else {
+    containScaleX = (canvasHeight * sourceAspect) / canvasWidth;
+  }
+
+  return {
+    ...transform,
+    scale: {
+      x: transform.scale.x * containScaleX,
+      y: transform.scale.y * containScaleY,
+    },
+  };
+};
+
 const renderFrameWithGPU = async (
   renderer: Renderer,
   frame: ImageBitmap,
   transform: ClipTransform,
-  _canvasWidth: number,
-  _canvasHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
 ): Promise<ImageBitmap | null> => {
   try {
     const device = renderer.getDevice();
@@ -209,13 +240,21 @@ const renderFrameWithGPU = async (
 
     const texture = renderer.createTextureFromImage(frame);
 
+    const normalizedTransform = getGpuTransformForBitmap(
+      frame,
+      transform,
+      canvasWidth,
+      canvasHeight,
+    );
+
     const gpuTransform = {
-      position: transform.position,
-      scale: transform.scale,
-      rotation: transform.rotation,
-      anchor: transform.anchor,
-      opacity: transform.opacity,
-      borderRadius: transform.borderRadius,
+      position: normalizedTransform.position,
+      scale: normalizedTransform.scale,
+      rotation: normalizedTransform.rotation,
+      anchor: normalizedTransform.anchor,
+      opacity: normalizedTransform.opacity,
+      borderRadius: normalizedTransform.borderRadius,
+      crop: normalizedTransform.crop,
     };
 
     renderer.renderLayer({
@@ -238,8 +277,8 @@ const renderFrameWithGPU = async (
 const renderAllLayersWithGPU = async (
   renderer: Renderer,
   layers: GPULayer[],
-  _canvasWidth: number,
-  _canvasHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
 ): Promise<ImageBitmap | null> => {
   try {
     const device = renderer.getDevice();
@@ -258,13 +297,21 @@ const renderAllLayersWithGPU = async (
       const texture = renderer.createTextureFromImage(layer.bitmap);
       textures.push(texture);
 
+      const normalizedTransform = getGpuTransformForBitmap(
+        layer.bitmap,
+        layer.transform,
+        canvasWidth,
+        canvasHeight,
+      );
+
       const gpuTransform = {
-        position: layer.transform.position,
-        scale: layer.transform.scale,
-        rotation: layer.transform.rotation,
-        anchor: layer.transform.anchor,
-        opacity: layer.transform.opacity,
-        borderRadius: layer.transform.borderRadius,
+        position: normalizedTransform.position,
+        scale: normalizedTransform.scale,
+        rotation: normalizedTransform.rotation,
+        anchor: normalizedTransform.anchor,
+        opacity: normalizedTransform.opacity,
+        borderRadius: normalizedTransform.borderRadius,
+        crop: normalizedTransform.crop,
       };
 
       renderer.renderLayer({
