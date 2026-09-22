@@ -1749,22 +1749,13 @@ export const Preview: React.FC = () => {
       const mainCtx = canvas.getContext("2d");
       if (!mainCtx) return false;
 
-      if (
-        !offscreenCanvasRef.current ||
-        offscreenCanvasRef.current.width !== canvas.width ||
-        offscreenCanvasRef.current.height !== canvas.height
-      ) {
-        offscreenCanvasRef.current = new OffscreenCanvas(
-          canvas.width,
-          canvas.height,
-        );
-        offscreenCtxRef.current = offscreenCanvasRef.current.getContext(
-          "2d",
-        ) as OffscreenCanvasRenderingContext2D;
-      }
-
+      const renderRequestSeq = ++directRenderRequestSeqRef.current;
+      // Each paused/edit render gets its own surface. Sharing the playback
+      // offscreen canvas lets an older async decode corrupt a newer layer state.
+      const renderSurface = new OffscreenCanvas(canvas.width, canvas.height);
+      const renderSurfaceCtx = renderSurface.getContext("2d");
       const ctx =
-        offscreenCtxRef.current as unknown as CanvasRenderingContext2D;
+        renderSurfaceCtx as unknown as CanvasRenderingContext2D | null;
       if (!ctx) return false;
 
       const videoTracks = timelineTracks.filter(
@@ -2169,13 +2160,21 @@ export const Preview: React.FC = () => {
         }
       }
 
-      if (hasVideoContent && !renderedMediaFrame) {
-        return false;
+      // A newer request superseded this one; never paint stale layers.
+      if (renderRequestSeq !== directRenderRequestSeqRef.current) {
+        return true;
       }
 
-      if (hasRenderedFrame && offscreenCanvasRef.current) {
+      // If a media decode missed a frame, preserve the last stable canvas.
+      // Returning true also prevents the fallback renderer from replacing it
+      // with a black/placeholder frame during rapid edits.
+      if (hasVideoContent && !renderedMediaFrame) {
+        return true;
+      }
+
+      if (hasRenderedFrame) {
         mainCtx.clearRect(0, 0, canvas.width, canvas.height);
-        mainCtx.drawImage(offscreenCanvasRef.current, 0, 0);
+        mainCtx.drawImage(renderSurface, 0, 0);
       }
 
       return hasRenderedFrame;
@@ -4383,6 +4382,7 @@ export const Preview: React.FC = () => {
   const modifiedRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const renderInFlightRef = useRef<boolean>(false);
   const interactiveRenderPromiseRef = useRef<Promise<void> | null>(null);
+  const directRenderRequestSeqRef = useRef(0);
 
   useEffect(() => {
     if (isPlaying) return;
