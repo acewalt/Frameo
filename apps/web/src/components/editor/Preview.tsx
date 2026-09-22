@@ -5763,47 +5763,6 @@ export const Preview: React.FC = () => {
     ],
   );
 
-  const handleMouseUp = useCallback(() => {
-    if (pendingOverlayTransformRef.current) {
-      const pending = pendingOverlayTransformRef.current;
-      if (pending.type === "text-clip") updateTextTransform(pending.id, pending.transform);
-      else updateShapeTransform(pending.id, pending.transform);
-      pendingOverlayTransformRef.current = null;
-    }
-    if (pendingTransformRef.current) {
-      updateClipTransform(
-        pendingTransformRef.current.clipId,
-        pendingTransformRef.current.transform,
-      );
-      pendingTransformRef.current = null;
-    }
-    setInteractionTargetType(null);
-    interactionTargetIdRef.current = null;
-    rotationStartRef.current = null;
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current);
-      rafIdRef.current = null;
-    }
-
-    const wasInteracting = isInteractingRef.current;
-    isInteractingRef.current = false;
-    setInteractionMode("none");
-    setActiveHandle(null);
-    interactionStartRef.current = null;
-
-    if (wasInteracting) {
-      const pending = interactiveRenderPromiseRef.current;
-      void Promise.resolve(pending)
-        .catch(() => undefined)
-        .then(() => renderFrameDirectly(playheadPosition))
-        .finally(() => {
-          setLiveTransform(null);
-        });
-    } else {
-      setLiveTransform(null);
-    }
-  }, [updateClipTransform, updateTextTransform, updateShapeTransform, renderFrameDirectly, playheadPosition]);
-
   const handleCropChange = useCallback(
     (crop: { x: number; y: number; width: number; height: number }) => {
       if (cropClipId) {
