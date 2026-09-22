@@ -204,17 +204,18 @@ export function createTransformMatrix(
 ): Float32Array {
   const matrix = new Float32Array(16);
   const normalizedX = (position.x / canvasWidth) * 2;
-  const normalizedY = (position.y / canvasHeight) * 2;
+  // Canvas2D uses +Y downward while WebGPU clip-space uses +Y upward.
+  const normalizedY = -(position.y / canvasHeight) * 2;
 
-  // Transform.rotation uses degrees everywhere else in Frameo/Canvas2D.
-  // Convert here so WebGPU playback matches the paused preview exactly.
-  const rotationRadians = (rotation * Math.PI) / 180;
+  // Canvas2D's positive visual rotation is clockwise because its Y axis points
+  // downward. WebGPU clip-space is Y-up, so negate the angle as well.
+  const rotationRadians = (-rotation * Math.PI) / 180;
   const cos = Math.cos(rotationRadians);
   const sin = Math.sin(rotationRadians);
 
-  // Anchor offset in normalized coordinates
+  // Anchor values use DOM/Canvas semantics (0 = top/left, 1 = bottom/right).
   const anchorOffsetX = (anchor.x - 0.5) * 2;
-  const anchorOffsetY = (anchor.y - 0.5) * 2;
+  const anchorOffsetY = -(anchor.y - 0.5) * 2;
   // This combines: translate(-anchor) * rotate * scale * translate(position + anchor)
 
   // Column 0
