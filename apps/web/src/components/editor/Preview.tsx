@@ -5967,7 +5967,11 @@ export const Preview: React.FC = () => {
           rafIdRef.current = requestAnimationFrame(() => {
             const pendingClip = pendingTransformRef.current;
             const pendingOverlay = pendingOverlayTransformRef.current;
-            if (pendingClip && !canUseRealtimeDomTransform) {
+            if (
+              pendingClip &&
+              !canUseRealtimeDomTransform &&
+              !simpleDomPreviewEligible
+            ) {
               renderInteractiveFrame();
             }
             if (pendingOverlay?.type === "text-clip") {
@@ -6277,7 +6281,11 @@ export const Preview: React.FC = () => {
 
       if (!rafIdRef.current) {
         rafIdRef.current = requestAnimationFrame(() => {
-          if (pendingTransformRef.current && !canUseRealtimeDomTransform) {
+          if (
+            pendingTransformRef.current &&
+            !canUseRealtimeDomTransform &&
+            !simpleDomPreviewEligible
+          ) {
             renderInteractiveFrame();
           }
           rafIdRef.current = null;
@@ -6301,6 +6309,7 @@ export const Preview: React.FC = () => {
       updateShapeTransform,
       renderInteractiveFrame,
       canUseRealtimeDomTransform,
+      simpleDomPreviewEligible,
     ],
   );
 
@@ -6351,7 +6360,7 @@ export const Preview: React.FC = () => {
         setInteractionTargetType(null);
         interactionTargetIdRef.current = null;
 
-        if (wasInteracting) {
+        if (wasInteracting && !simpleDomPreviewEligible) {
           const pending = interactiveRenderPromiseRef.current;
           void Promise.resolve(pending)
             .catch(() => undefined)
@@ -6380,6 +6389,7 @@ export const Preview: React.FC = () => {
     updateClipTransform,
     updateTextTransform,
     updateShapeTransform,
+    simpleDomPreviewEligible,
   ]);
 
   const handleScrubClick = useCallback(
