@@ -5759,7 +5759,7 @@ export const Preview: React.FC = () => {
     <div
       ref={containerRef}
       data-tour="preview"
-      className="flex-1 min-h-0 min-w-0 bg-background flex flex-col relative group overflow-hidden"
+      className="h-full flex-1 min-h-0 min-w-0 bg-background flex flex-col relative group overflow-hidden"
     >
       {/* Crop Mode View - Full Screen Overlay */}
       {shouldShowCropMode && (
@@ -5780,7 +5780,7 @@ export const Preview: React.FC = () => {
       <div
         ref={videoAreaRef}
         className={`flex-1 min-h-0 min-w-0 relative flex items-center justify-center bg-background-secondary/30 transition-all duration-300 ${
-          isMaximized || isFullscreen ? "p-0" : "p-4"
+          isMaximized || isFullscreen ? "p-0" : "p-2 sm:p-4"
         } ${zoomLevel > 1 ? "overflow-auto" : ""}`}
         onMouseMove={interactionMode !== "none" ? handleMouseMove : undefined}
         onMouseUp={handleMouseUp}
@@ -6266,15 +6266,15 @@ export const Preview: React.FC = () => {
         </div>
 
         {/* Controls row */}
-        <div className="h-11 sm:h-12 px-2 sm:px-6 flex items-center justify-between gap-2">
+        <div className="relative h-11 sm:h-12 px-2 sm:px-6 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="font-mono text-text-primary tabular-nums text-xs sm:text-sm w-20 sm:w-24 tracking-wider shrink-0">
+          <div className="font-mono text-text-primary tabular-nums text-[11px] sm:text-sm w-16 sm:w-24 tracking-wider shrink-0">
             {formatTime(playheadPosition)}
           </div>
 
           {rendererType !== "none" && (
             <span
-              className={`text-[10px] px-1.5 py-0.5 rounded ${
+              className={`hidden sm:inline-flex text-[10px] px-1.5 py-0.5 rounded ${
                 rendererType === "webgpu"
                   ? "bg-green-500/20 text-green-400"
                   : "bg-gray-500/20 text-gray-400"
@@ -6286,7 +6286,7 @@ export const Preview: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+        <div className="absolute left-1/2 -translate-x-1/2 sm:static sm:translate-x-0 flex items-center gap-2 sm:gap-6 shrink-0">
           <IconButton
             icon={SkipBack}
             onClick={handleSkipBack}
