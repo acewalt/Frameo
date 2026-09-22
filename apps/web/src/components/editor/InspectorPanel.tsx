@@ -191,7 +191,7 @@ const ParticleEffectsSectionWrapper: React.FC<{
 };
 
 export const InspectorPanel: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   // Stores
   const {
     getClip,
@@ -1044,7 +1044,7 @@ export const InspectorPanel: React.FC = () => {
 
                   <div>
                     <label className="text-[10px] text-text-secondary block mb-1">
-                      Target Language
+                      {language === "es" ? "Idioma de destino" : "Target Language"}
                     </label>
                     <Select
                       value={targetLanguage}
@@ -1052,18 +1052,18 @@ export const InspectorPanel: React.FC = () => {
                       disabled={isTranscribing}
                     >
                       <SelectTrigger className="w-full bg-background-secondary border-border text-text-primary text-[11px]">
-                        <SelectValue placeholder="Original (no translation)" />
+                        <SelectValue placeholder={language === "es" ? "Original (sin traducción)" : "Original (no translation)"} />
                       </SelectTrigger>
                       <SelectContent className="bg-background-secondary border-border">
-                        <SelectItem value="none">Original (no translation)</SelectItem>
+                        <SelectItem value="none">{language === "es" ? "Original (sin traducción)" : "Original (no translation)"}</SelectItem>
                         <SelectGroup>
-                          <SelectLabel className="text-[10px]">Translate to</SelectLabel>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="es">Spanish</SelectItem>
-                          <SelectItem value="fr">French</SelectItem>
-                          <SelectItem value="de">German</SelectItem>
-                          <SelectItem value="pt">Portuguese</SelectItem>
-                          <SelectItem value="it">Italian</SelectItem>
+                          <SelectLabel className="text-[10px]">{language === "es" ? "Traducir a" : "Translate to"}</SelectLabel>
+                          <SelectItem value="en">{language === "es" ? "Inglés" : "English"}</SelectItem>
+                          <SelectItem value="es">{language === "es" ? "Español" : "Spanish"}</SelectItem>
+                          <SelectItem value="fr">{language === "es" ? "Francés" : "French"}</SelectItem>
+                          <SelectItem value="de">{language === "es" ? "Alemán" : "German"}</SelectItem>
+                          <SelectItem value="pt">{language === "es" ? "Portugués" : "Portuguese"}</SelectItem>
+                          <SelectItem value="it">{language === "es" ? "Italiano" : "Italian"}</SelectItem>
                           <SelectItem value="nl">Dutch</SelectItem>
                           <SelectItem value="ru">Russian</SelectItem>
                           <SelectItem value="zh">Chinese</SelectItem>
@@ -1110,7 +1110,7 @@ export const InspectorPanel: React.FC = () => {
                       className="w-full py-2 bg-primary hover:bg-primary/80 text-black rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-2"
                     >
                       <Captions size={14} />
-                      Generate Captions
+                      {language === "es" ? "Generar subtítulos" : "Generate Captions"}
                     </button>
                   )}
                 </div>
@@ -1641,7 +1641,7 @@ export const InspectorPanel: React.FC = () => {
               <div className="border border-primary/30 bg-primary/5 rounded-xl p-4 relative overflow-hidden">
                 <div className="flex items-center gap-2 text-primary mb-3">
                   <Zap size={14} />
-                  <span className="text-xs font-bold">Quick Actions</span>
+                  <span className="text-xs font-bold">{language === "es" ? "Acciones rápidas" : "Quick Actions"}</span>
                 </div>
                 <div className="space-y-2">
                   {showVideoControls && (
@@ -1654,7 +1654,7 @@ export const InspectorPanel: React.FC = () => {
                           : "bg-background-tertiary hover:bg-primary hover:text-white border-border hover:border-primary"
                       }`}
                     >
-                      Remove Background
+                      {language === "es" ? "Quitar fondo" : "Remove Background"}
                     </button>
                   )}
                   {showAudioEffects && (
@@ -1672,12 +1672,12 @@ export const InspectorPanel: React.FC = () => {
                       {isEnhancingAudio ? (
                         <>
                           <Loader2 size={12} className="animate-spin" />
-                          Cleaning up...
+                          {language === "es" ? "Limpiando..." : "Cleaning up..."}
                         </>
                       ) : audioEnhanced ? (
-                        "✓ Noise Reduced"
+                        (language === "es" ? "✓ Ruido reducido" : "✓ Noise Reduced")
                       ) : (
-                        "Quick Dialogue Cleanup"
+                        (language === "es" ? "Limpieza rápida de diálogo" : "Quick Dialogue Cleanup")
                       )}
                     </button>
                   )}
@@ -1911,7 +1911,7 @@ export const InspectorPanel: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
-                    Font Family
+                    {language === "es" ? "Fuente" : "Font Family"}
                   </span>
                   <Select
                     value={selectedSubtitle.style?.fontFamily || "Inter"}
@@ -1929,7 +1929,7 @@ export const InspectorPanel: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-background-secondary border-border max-h-60">
                       <SelectGroup>
-                        <SelectLabel className="text-text-muted text-[10px] font-medium">Popular</SelectLabel>
+                        <SelectLabel className="text-text-muted text-[10px] font-medium">{language === "es" ? "Populares" : "Popular"}</SelectLabel>
                         {["Inter", "Poppins", "Montserrat", "Roboto", "Open Sans", "Lato", "DM Sans"].map((font) => (
                           <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                             {font}
@@ -1937,7 +1937,7 @@ export const InspectorPanel: React.FC = () => {
                         ))}
                       </SelectGroup>
                       <SelectGroup>
-                        <SelectLabel className="text-text-muted text-[10px] font-medium">Display</SelectLabel>
+                        <SelectLabel className="text-text-muted text-[10px] font-medium">{language === "es" ? "Display" : "Display"}</SelectLabel>
                         {["Bebas Neue", "Anton", "Oswald", "Teko", "Staatliches", "Alfa Slab One"].map((font) => (
                           <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                             {font}
@@ -1945,7 +1945,7 @@ export const InspectorPanel: React.FC = () => {
                         ))}
                       </SelectGroup>
                       <SelectGroup>
-                        <SelectLabel className="text-text-muted text-[10px] font-medium">Elegant</SelectLabel>
+                        <SelectLabel className="text-text-muted text-[10px] font-medium">{language === "es" ? "Elegantes" : "Elegant"}</SelectLabel>
                         {["Playfair Display", "Cinzel", "Lora", "Merriweather", "DM Serif Display"].map((font) => (
                           <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                             {font}
@@ -1953,7 +1953,7 @@ export const InspectorPanel: React.FC = () => {
                         ))}
                       </SelectGroup>
                       <SelectGroup>
-                        <SelectLabel className="text-text-muted text-[10px] font-medium">Handwritten</SelectLabel>
+                        <SelectLabel className="text-text-muted text-[10px] font-medium">{language === "es" ? "Manuscritas" : "Handwritten"}</SelectLabel>
                         {["Pacifico", "Lobster", "Dancing Script", "Caveat", "Permanent Marker"].map((font) => (
                           <SelectItem key={font} value={font} style={{ fontFamily: font }}>
                             {font}
@@ -1965,7 +1965,7 @@ export const InspectorPanel: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
-                    Font Size
+                    {language === "es" ? "Tamaño de fuente" : "Font Size"}
                   </span>
                   <Input
                     type="number"
@@ -1987,11 +1987,11 @@ export const InspectorPanel: React.FC = () => {
             </Section>
 
             {/* Subtitle Colors */}
-            <Section title="Colors">
+            <Section title={language === "es" ? "Colores" : "Colors"}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
-                    Text Color
+                    {language === "es" ? "Color del texto" : "Text Color"}
                   </span>
                   <div className="flex items-center gap-2">
                     <input
@@ -2014,7 +2014,7 @@ export const InspectorPanel: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-text-secondary">
-                    Background
+                    {language === "es" ? "Fondo" : "Background"}
                   </span>
                   <div className="flex items-center gap-2">
                     <input
@@ -2067,7 +2067,7 @@ export const InspectorPanel: React.FC = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-background-secondary border-border">
-                        <SelectItem value="0">None</SelectItem>
+                        <SelectItem value="0">{language === "es" ? "Ninguno" : "None"}</SelectItem>
                         <SelectItem value="0.5">50%</SelectItem>
                         <SelectItem value="0.7">70%</SelectItem>
                         <SelectItem value="1">100%</SelectItem>
@@ -2087,7 +2087,7 @@ export const InspectorPanel: React.FC = () => {
                 }}
                 className="w-full py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg text-[10px] transition-all"
               >
-                Delete Subtitle
+                {language === "es" ? "Eliminar subtítulo" : "Delete Subtitle"}
               </button>
             </div>
           </>
