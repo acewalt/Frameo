@@ -347,10 +347,6 @@ const MediaThumbnail: React.FC<{
           </div>
         )}
 
-        {/* KieAI Error Badge */}
-
-        {/* Pending KieAI Badge */}
-
         {/* Missing Asset Badge */}
         {item.isPlaceholder && (
           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-yellow-500 rounded text-[8px] text-black font-bold flex items-center gap-1">
@@ -365,10 +361,6 @@ const MediaThumbnail: React.FC<{
             {formatDuration(item.metadata.duration)}
           </div>
         )}
-
-        {/* Error overlay */}
-
-        {/* Pending overlay */}
 
         {/* Warning icon overlay for placeholders */}
         {item.isPlaceholder && !isHovered && (
@@ -818,8 +810,6 @@ export const AssetsPanel: React.FC = () => {
     (preset) =>
       backgroundCategory === "all" || preset.category === backgroundCategory,
   );
-
-  // Open KieAI dialog for an image asset
 
   const getSelectedTimelineClipId = useCallback((): string | null => {
     const selectedId = getSelectedClipIds()[0];
