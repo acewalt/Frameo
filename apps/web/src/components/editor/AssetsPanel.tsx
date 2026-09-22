@@ -170,7 +170,7 @@ const MediaThumbnail: React.FC<{
               <Icon size={14} className={iconColor} />
             </div>
           )}
-          {!item.kieaiError && !item.isPending && item.isPlaceholder && (
+          {item.isPlaceholder && (
             <div className="absolute inset-0 flex items-center justify-center bg-yellow-500/10">
               <AlertTriangle size={12} className="text-yellow-500/70" />
             </div>
@@ -197,49 +197,21 @@ const MediaThumbnail: React.FC<{
         {/* Hover actions */}
         {isHovered && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            {item.kieaiError ? (
-              <button
-                onClick={(e) => { e.stopPropagation(); onRetryKieAI?.(); }}
-                title="Retry generation"
-                className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
-              >
-                <RefreshCw size={12} className="text-red-400" />
-              </button>
-            ) : item.isPending ? (
-              <div className="p-1" title="Generating…">
-                <div className="h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-              </div>
-            ) : item.isPlaceholder ? (
+            {item.isPlaceholder ? (
               <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onReplace(); }}
-                  title="Replace asset"
-                  className="p-1 bg-yellow-500/20 rounded hover:bg-yellow-500/40 transition-colors"
-                >
+                <button onClick={(e) => { e.stopPropagation(); onReplace(); }} title="Replace asset" className="p-1 bg-yellow-500/20 rounded hover:bg-yellow-500/40 transition-colors">
                   <RefreshCw size={12} className="text-yellow-500" />
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  title="Delete"
-                  className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
-                >
+                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete" className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors">
                   <Trash2 size={12} className="text-red-400" />
                 </button>
               </>
             ) : (
               <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }}
-                  title="Add to timeline"
-                  className="p-1 bg-primary/20 rounded hover:bg-primary/40 transition-colors"
-                >
+                <button onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }} title="Add to timeline" className="p-1 bg-primary/20 rounded hover:bg-primary/40 transition-colors">
                   <Plus size={12} className="text-primary" />
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  title="Delete"
-                  className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
-                >
+                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete" className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors">
                   <Trash2 size={12} className="text-red-400" />
                 </button>
               </>
@@ -317,7 +289,7 @@ const MediaThumbnail: React.FC<{
         {/* Pending KieAI Badge */}
 
         {/* Missing Asset Badge */}
-        {!item.kieaiError && !item.isPending && item.isPlaceholder && (
+        {item.isPlaceholder && (
           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-yellow-500 rounded text-[8px] text-black font-bold flex items-center gap-1">
             <AlertTriangle size={10} />
             Missing
@@ -336,7 +308,7 @@ const MediaThumbnail: React.FC<{
         {/* Pending overlay */}
 
         {/* Warning icon overlay for placeholders */}
-        {!item.kieaiError && !item.isPending && item.isPlaceholder && !isHovered && (
+        {item.isPlaceholder && !isHovered && (
           <div className="absolute inset-0 flex items-center justify-center bg-yellow-500/10">
             <AlertTriangle size={viewMode === "small" ? 20 : 32} className="text-yellow-500/50" />
           </div>
@@ -425,9 +397,8 @@ export const AssetsPanel: React.FC = () => {
     { value: "recipes", label: t("recipes"), description: t("recipes") },
     { value: "templates", label: t("projectTemplates"), description: t("projectTemplates") },
   ];
-  const { t } = useI18n();
-  const tabLabel = (tab: AssetsTab) => tab === "media" ? t("media") : tab === "text" ? t("text") : tab === "graphics" ? t("graphics") : tab === "recipes" ? t("recipes") : t("projectTemplates");
-  const tabDescription = (tab: AssetsTab) => tab === "media" ? t("mediaDescription") : tab === "text" ? t("textDescription") : tab === "graphics" ? t("graphicsDescription") : tab === "recipes" ? t("recipesDescription") : t("templatesDescription");
+  const tabLabel = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.label ?? tab;
+  const tabDescription = (tab: AssetsTab) => ASSETS_TABS.find((x) => x.value === tab)?.description ?? tab;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTabRaw] = useState<AssetsTab>("media");
