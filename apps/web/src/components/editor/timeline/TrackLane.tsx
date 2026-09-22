@@ -251,7 +251,6 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
               allTracks={allTracks}
               pixelsPerSecond={pixelsPerSecond}
               isSelected={selectedClipIds.includes(clip.id)}
-              trackHeights={trackHeights}
               timelineRef={timelineRef}
               onSelect={onSelectClip}
               onMoveClip={onMoveClip}
