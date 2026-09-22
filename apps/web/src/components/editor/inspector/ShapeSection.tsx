@@ -8,6 +8,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useProjectStore } from "../../../stores/project-store";
+import { useI18n } from "../../../i18n";
 import type { ShapeStyle, FillStyle, StrokeStyle } from "@openreel/core";
 import { ColorPicker, LabeledSlider as Slider } from "@openreel/ui";
 
@@ -57,16 +58,17 @@ const NumberInput: React.FC<{
 const StrokeStyleSelector: React.FC<{
   value: number[] | undefined;
   onChange: (dashArray: number[] | undefined) => void;
-}> = ({ value, onChange }) => {
+  language: "es" | "en";
+}> = ({ value, onChange, language }) => {
   const styles = [
-    { value: undefined, label: "Solid", preview: "────" },
-    { value: [5, 5], label: "Dashed", preview: "- - -" },
-    { value: [2, 2], label: "Dotted", preview: "• • •" },
+    { value: undefined, label: language === "es" ? "Sólido" : "Solid", preview: "────" },
+    { value: [5, 5], label: language === "es" ? "Discontinuo" : "Dashed", preview: "- - -" },
+    { value: [2, 2], label: language === "es" ? "Punteado" : "Dotted", preview: "• • •" },
   ];
 
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[10px] text-text-secondary">Style</span>
+      <span className="text-[10px] text-text-secondary">{language === "es" ? "Estilo" : "Style"}</span>
       <div className="flex gap-1">
         {styles.map((style, index) => (
           <button
@@ -90,7 +92,8 @@ const StrokeStyleSelector: React.FC<{
 
 const ShapeTypeDisplay: React.FC<{
   shapeType: string;
-}> = ({ shapeType }) => {
+  language: "es" | "en";
+}> = ({ shapeType, language }) => {
   const shapeIcons: Record<string, React.ReactNode> = {
     rectangle: <Square size={16} />,
     circle: <Circle size={16} />,
@@ -108,9 +111,11 @@ const ShapeTypeDisplay: React.FC<{
       </div>
       <div>
         <span className="text-[10px] font-medium text-text-primary capitalize">
-          {shapeType}
+          {language === "es"
+            ? ({ rectangle: "Rectángulo", circle: "Círculo", ellipse: "Elipse", triangle: "Triángulo", star: "Estrella", polygon: "Polígono", arrow: "Flecha" } as Record<string,string>)[shapeType] ?? shapeType
+            : shapeType}
         </span>
-        <p className="text-[9px] text-text-muted">Shape clip</p>
+        <p className="text-[9px] text-text-muted">{language === "es" ? "Clip de forma" : "Shape clip"}</p>
       </div>
     </div>
   );
@@ -121,6 +126,7 @@ interface ShapeSectionProps {
 }
 
 export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
+  const { language } = useI18n();
   const { getShapeClip, updateShapeStyle, project } = useProjectStore();
 
   const shapeClip = useMemo(
@@ -159,21 +165,44 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
     return (
       <div className="p-4 text-center">
         <Square size={24} className="mx-auto mb-2 text-text-muted" />
-        <p className="text-[10px] text-text-muted">No shape clip selected</p>
+        <p className="text-[10px] text-text-muted">{language === "es" ? "No hay una forma seleccionada" : "No shape clip selected"}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <ShapeTypeDisplay shapeType={shapeType} />
+      <ShapeTypeDisplay shapeType={shapeType} language={language} />
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
-        <span className="text-[10px] text-text-secondary font-medium">
-          Fill
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-text-secondary font-medium">
+            {language === "es" ? "Relleno" : "Fill"}
+          </span>
+          <button
+            onClick={() =>
+              handleStyleChange({
+                fill: {
+                  ...style.fill,
+                  type: style.fill?.type || "solid",
+                  color: style.fill?.color || "#3b82f6",
+                  opacity: (style.fill?.opacity || 0) > 0 ? 0 : 1,
+                },
+              })
+            }
+            className={`rounded px-2 py-0.5 text-[9px] border ${
+              (style.fill?.opacity || 0) > 0
+                ? "border-primary bg-primary/15 text-primary"
+                : "border-border text-text-muted"
+            }`}
+          >
+            {(style.fill?.opacity || 0) > 0
+              ? (language === "es" ? "Activo" : "On")
+              : (language === "es" ? "Desactivado" : "Off")}
+          </button>
+        </div>
         <ColorField
-          label="Color"
+          label={language === "es" ? "Color" : "Color"}
           value={style.fill?.color || "#3b82f6"}
           onChange={(color) =>
             handleStyleChange({
@@ -187,7 +216,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
           }
         />
         <Slider
-          label="Opacity"
+          label={language === "es" ? "Opacidad" : "Opacity"}
           value={(style.fill?.opacity || 1) * 100}
           onChange={(opacity) =>
             handleStyleChange({
@@ -205,11 +234,34 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
       </div>
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
-        <span className="text-[10px] text-text-secondary font-medium">
-          Stroke
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-text-secondary font-medium">
+            {language === "es" ? "Contorno" : "Stroke"}
+          </span>
+          <button
+            onClick={() =>
+              handleStyleChange({
+                stroke: {
+                  ...style.stroke,
+                  color: style.stroke?.color || "#1d4ed8",
+                  width: (style.stroke?.width || 0) > 0 ? 0 : 2,
+                  opacity: style.stroke?.opacity || 1,
+                },
+              })
+            }
+            className={`rounded px-2 py-0.5 text-[9px] border ${
+              (style.stroke?.width || 0) > 0
+                ? "border-primary bg-primary/15 text-primary"
+                : "border-border text-text-muted"
+            }`}
+          >
+            {(style.stroke?.width || 0) > 0
+              ? (language === "es" ? "Activo" : "On")
+              : (language === "es" ? "Desactivado" : "Off")}
+          </button>
+        </div>
         <ColorField
-          label="Color"
+          label={language === "es" ? "Color" : "Color"}
           value={style.stroke?.color || "#1d4ed8"}
           onChange={(color) =>
             handleStyleChange({
@@ -223,7 +275,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
           }
         />
         <NumberInput
-          label="Width"
+          label={language === "es" ? "Ancho" : "Width"}
           value={style.stroke?.width || 0}
           onChange={(width) =>
             handleStyleChange({
@@ -241,6 +293,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
         />
         <StrokeStyleSelector
           value={style.stroke?.dashArray}
+          language={language}
           onChange={(dashArray) =>
             handleStyleChange({
               stroke: {
@@ -258,10 +311,10 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
       {shapeType === "rectangle" && (
         <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
           <span className="text-[10px] text-text-secondary font-medium">
-            Corners
+            {language === "es" ? "Esquinas" : "Corners"}
           </span>
           <Slider
-            label="Radius"
+            label={language === "es" ? "Radio" : "Radius"}
             value={style.cornerRadius || 0}
             onChange={(cornerRadius) => handleStyleChange({ cornerRadius })}
             min={0}
@@ -273,10 +326,10 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
 
       <div className="space-y-2 p-3 bg-background-tertiary rounded-lg">
         <span className="text-[10px] text-text-secondary font-medium">
-          Shadow
+          {language === "es" ? "Sombra" : "Shadow"}
         </span>
         <ColorField
-          label="Color"
+          label={language === "es" ? "Color" : "Color"}
           value={style.shadow?.color || "#000000"}
           onChange={(color) =>
             handleStyleChange({
@@ -291,7 +344,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
           showAlpha
         />
         <NumberInput
-          label="Offset X"
+          label={language === "es" ? "Desplazamiento X" : "Offset X"}
           value={style.shadow?.offsetX || 0}
           onChange={(offsetX) =>
             handleStyleChange({
@@ -308,7 +361,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
           unit="px"
         />
         <NumberInput
-          label="Offset Y"
+          label={language === "es" ? "Desplazamiento Y" : "Offset Y"}
           value={style.shadow?.offsetY || 0}
           onChange={(offsetY) =>
             handleStyleChange({
@@ -325,7 +378,7 @@ export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
           unit="px"
         />
         <Slider
-          label="Blur"
+          label={language === "es" ? "Desenfoque" : "Blur"}
           value={style.shadow?.blur || 0}
           onChange={(blur) =>
             handleStyleChange({
