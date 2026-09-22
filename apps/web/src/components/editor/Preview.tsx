@@ -5238,10 +5238,10 @@ export const Preview: React.FC = () => {
         (Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180) /
         Math.PI;
 
+      isInteractingRef.current = true;
       if (target === "clip" && canUseRealtimeDomTransform) {
         void renderFrameDirectly(playheadPosition, id);
       }
-      isInteractingRef.current = true;
       setInteractionMode("rotate");
       setInteractionTargetType(target);
       interactionTargetIdRef.current = id;
@@ -5274,10 +5274,10 @@ export const Preview: React.FC = () => {
         anchor: { x: 0.5, y: 0.5 },
       };
 
+      isInteractingRef.current = true;
       if (canUseRealtimeDomTransform) {
         void renderFrameDirectly(playheadPosition, clip.id);
       }
-      isInteractingRef.current = true;
       setInteractionMode("resize");
       setActiveHandle(handle);
       setInteractionTargetType("clip");
@@ -5319,10 +5319,10 @@ export const Preview: React.FC = () => {
         anchor: { x: 0.5, y: 0.5 },
       };
 
+      isInteractingRef.current = true;
       if (canUseRealtimeDomTransform) {
         void renderFrameDirectly(playheadPosition, clip.id);
       }
-      isInteractingRef.current = true;
       setInteractionMode("move");
       setInteractionTargetType("clip");
       interactionTargetIdRef.current = clip.id;
