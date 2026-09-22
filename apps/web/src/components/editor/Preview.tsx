@@ -2451,6 +2451,29 @@ export const Preview: React.FC = () => {
         }
       }
 
+      // Native playback is only used for a simple video-only timeline.
+      // Once images/text/graphics participate, exact track ordering matters and
+      // the multi-track compositor must own the frame.
+      const hasLayeredVisualContent =
+        tracks.some(
+          (track) =>
+            track.type === "image" &&
+            !track.hidden &&
+            track.clips.some(
+              (clip) => clip.startTime + clip.duration > startPosition,
+            ),
+        ) ||
+        allTextClips.some(
+          (clip) => clip.startTime + clip.duration > startPosition,
+        ) ||
+        allShapeClips.some(
+          (clip) => clip.startTime + clip.duration > startPosition,
+        );
+
+      if (hasLayeredVisualContent) {
+        return { canUse: false, clips: [] };
+      }
+
       const hasActiveAudioEffects = tracks.some(
         (track) =>
           (track.type === "audio" || track.type === "video") &&
