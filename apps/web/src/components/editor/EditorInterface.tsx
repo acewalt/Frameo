@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { Layers3, SlidersHorizontal, X } from "lucide-react";
 
 import { Toolbar } from "./Toolbar";
 import { AssetsPanel } from "./AssetsPanel";
@@ -281,6 +282,18 @@ export const EditorInterface: React.FC = () => {
   const [timelineHeight, setTimelineHeight] = useState(DEFAULT_TIMELINE_HEIGHT);
   const [assetsWidth, setAssetsWidth] = useState(DEFAULT_ASSETS_WIDTH);
   const [inspectorWidth, setInspectorWidth] = useState(DEFAULT_INSPECTOR_WIDTH);
+  const [isMobileLayout, setIsMobileLayout] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+  );
+  const [mobilePanel, setMobilePanel] = useState<"assets" | "inspector" | null>(null);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobileLayout(query.matches);
+    sync();
+    query.addEventListener?.("change", sync);
+    return () => query.removeEventListener?.("change", sync);
+  }, []);
 
   const timelineHeightRef = useRef(DEFAULT_TIMELINE_HEIGHT);
   const assetsWidthRef = useRef(DEFAULT_ASSETS_WIDTH);
@@ -488,6 +501,92 @@ export const EditorInterface: React.FC = () => {
             <p className="text-red-500 text-xs mt-2">{initError}</p>
           )}
         </div>
+      </div>
+    );
+  }
+
+  if (isMobileLayout) {
+    const mobilePanelTitle =
+      mobilePanel === "assets"
+        ? (language === "es" ? "Recursos" : "Assets")
+        : (language === "es" ? "Inspector" : "Inspector");
+
+    return (
+      <div className="w-full h-[100dvh] bg-background flex flex-col overflow-hidden font-sans select-none relative z-20 text-xs text-text-secondary">
+        <Toolbar />
+
+        <div ref={editorBodyRef} className="relative min-h-0 flex-1 flex flex-col overflow-hidden">
+          <div className="min-h-[180px] flex-1 min-w-0 overflow-hidden bg-background">
+            <PanelErrorBoundary name={language === "es" ? "Vista previa" : "Preview"}>
+              <Preview />
+            </PanelErrorBoundary>
+          </div>
+
+          <div className="h-11 shrink-0 border-y border-border bg-background-secondary flex items-center justify-center gap-2 px-3 z-30">
+            <button
+              onClick={() => setMobilePanel((panel) => panel === "assets" ? null : "assets")}
+              className={`h-8 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
+                mobilePanel === "assets"
+                  ? "border-primary/50 bg-primary/15 text-primary"
+                  : "border-border bg-background-tertiary text-text-secondary"
+              }`}
+            >
+              <Layers3 size={15} />
+              {language === "es" ? "Recursos" : "Assets"}
+            </button>
+            <button
+              onClick={() => setMobilePanel((panel) => panel === "inspector" ? null : "inspector")}
+              className={`h-8 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
+                mobilePanel === "inspector"
+                  ? "border-primary/50 bg-primary/15 text-primary"
+                  : "border-border bg-background-tertiary text-text-secondary"
+              }`}
+            >
+              <SlidersHorizontal size={15} />
+              {language === "es" ? "Inspector" : "Inspector"}
+            </button>
+          </div>
+
+          <div className="h-[38dvh] min-h-[235px] max-h-[340px] shrink-0 flex flex-col overflow-hidden">
+            <PanelErrorBoundary name={language === "es" ? "Línea de tiempo" : "Timeline"}>
+              <Timeline />
+            </PanelErrorBoundary>
+          </div>
+
+          {mobilePanel && (
+            <div className="absolute inset-0 z-50 bg-background flex flex-col shadow-2xl">
+              <div className="h-11 shrink-0 px-3 border-b border-border bg-background-secondary flex items-center justify-between">
+                <div className="flex items-center gap-2 text-text-primary font-semibold text-xs">
+                  {mobilePanel === "assets" ? <Layers3 size={15} /> : <SlidersHorizontal size={15} />}
+                  {mobilePanelTitle}
+                </div>
+                <button
+                  onClick={() => setMobilePanel(null)}
+                  className="w-8 h-8 grid place-items-center rounded-lg bg-background-tertiary text-text-secondary active:bg-background-elevated"
+                  aria-label={language === "es" ? "Cerrar" : "Close"}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {mobilePanel === "assets" ? (
+                  <PanelErrorBoundary name={language === "es" ? "Panel de recursos" : "Assets Panel"}>
+                    <AssetsPanel />
+                  </PanelErrorBoundary>
+                ) : (
+                  <PanelErrorBoundary name="Inspector">
+                    <InspectorPanel />
+                  </PanelErrorBoundary>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <KeyboardShortcutsOverlay
+          isOpen={showShortcutsOverlay}
+          onClose={() => setShowShortcutsOverlay(false)}
+        />
       </div>
     );
   }
