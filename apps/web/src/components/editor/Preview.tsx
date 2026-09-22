@@ -964,6 +964,23 @@ export const Preview: React.FC = () => {
 
   const isPlaying = playbackState === "playing";
 
+  // Single authoritative timeline end used by both DOM and advanced preview paths.
+  const actualEndTime = React.useMemo(() => {
+    let maxEnd = 0;
+    for (const track of project.timeline.tracks) {
+      for (const clip of track.clips) {
+        maxEnd = Math.max(maxEnd, clip.startTime + clip.duration);
+      }
+    }
+    for (const textClip of allTextClips) {
+      maxEnd = Math.max(maxEnd, textClip.startTime + textClip.duration);
+    }
+    for (const shapeClip of allShapeClips) {
+      maxEnd = Math.max(maxEnd, shapeClip.startTime + shapeClip.duration);
+    }
+    return maxEnd;
+  }, [project.timeline.tracks, allTextClips, allShapeClips]);
+
   const domPreviewItems = useMemo(() => {
     if (!simpleDomPreviewEligible) return [];
 
@@ -1301,33 +1318,6 @@ export const Preview: React.FC = () => {
   const particleEffects = React.useMemo(() => {
     return particleEngine.getAllEffects();
   }, [particleEngine, particleUpdateTrigger]);
-
-  // Calculate the actual end time for playback (where clips actually end)
-  // This needs to recalculate whenever the timeline changes
-  // Includes video/audio/image clips, text clips, and shape clips
-  const actualEndTime = React.useMemo(() => {
-    const tracks = project.timeline.tracks;
-    let maxEnd = 0;
-
-    for (const track of tracks) {
-      for (const clip of track.clips) {
-        const end = clip.startTime + clip.duration;
-        if (end > maxEnd) maxEnd = end;
-      }
-    }
-
-    for (const textClip of allTextClips) {
-      const end = textClip.startTime + textClip.duration;
-      if (end > maxEnd) maxEnd = end;
-    }
-
-    for (const shapeClip of allShapeClips) {
-      const end = shapeClip.startTime + shapeClip.duration;
-      if (end > maxEnd) maxEnd = end;
-    }
-
-    return maxEnd;
-  }, [project.timeline.tracks, allTextClips, allShapeClips]);
 
   // RenderBridge is guaranteed to be initialized before Preview renders (see EditorInterface)
   useEffect(() => {
