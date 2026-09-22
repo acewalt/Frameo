@@ -231,7 +231,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             onClick={() => setViewMode("home")}
           >
             <ArrowRight className="rotate-180" size={16} />
-            Back
+            {t("back")}
           </Button>
           <h2 className="text-sm font-medium text-text-primary">
             {t("recentProjects")}
@@ -391,11 +391,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
           <span className="text-text-muted/30">·</span>
 
           <p className="text-xs text-text-muted/60">
-            Press{" "}
+            {language === "es" ? "Pulsa" : "Press"}{" "}
             <kbd className="px-1.5 py-0.5 bg-background-tertiary border border-border rounded text-text-muted font-mono text-[10px]">
               Esc
             </kbd>{" "}
-            to skip
+            {language === "es" ? "para omitir" : "to skip"}
           </p>
         </div>
       </div>
