@@ -582,6 +582,8 @@ export const Preview: React.FC = () => {
     scale: { x: number; y: number };
     rotation?: number;
   } | null>(null);
+  const [interactionMediaUrl, setInteractionMediaUrl] = useState<string | null>(null);
+  const interactionMediaVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Track interaction target type (video clip or text clip)
   const [interactionTargetType, setInteractionTargetType] = useState<
@@ -4496,6 +4498,119 @@ export const Preview: React.FC = () => {
     return null;
   }, [timelineTracks, playheadPosition]);
 
+  const interactionMediaClip = selectedClip || clipAtPlayhead;
+  const interactionMediaItem = interactionMediaClip
+    ? getMediaItem(interactionMediaClip.mediaId)
+    : null;
+
+  useEffect(() => {
+    const blob = interactionMediaItem?.blob;
+    if (!blob) {
+      setInteractionMediaUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    setInteractionMediaUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [interactionMediaItem?.blob]);
+
+  const canUseRealtimeDomTransform = useMemo(() => {
+    const clip = interactionMediaClip;
+    const mediaItem = interactionMediaItem;
+    if (!clip || !mediaItem?.blob || isPlaying || cropMode) return false;
+    if (mediaItem.type !== "video" && mediaItem.type !== "image") return false;
+    if (clipNeedsFrameProcessing(clip.id)) return false;
+    if (getTransitionAtTime(playheadPosition, timelineTracks)) return false;
+    if (clip.crop) return false;
+    if (clip.keyframes && clip.keyframes.length > 0) return false;
+    if (clip.emphasisAnimation && clip.emphasisAnimation.type !== "none") return false;
+    if (clip.stabilization?.enabled) return false;
+
+    const speedEngine = getSpeedEngine();
+    if (speedEngine.getClipSpeed(clip.id) !== 1 || speedEngine.isReverse(clip.id)) {
+      return false;
+    }
+
+    let activeMediaCount = 0;
+    for (const track of timelineTracks) {
+      if ((track.type !== "video" && track.type !== "image") || track.hidden) continue;
+      for (const candidate of track.clips) {
+        if (
+          playheadPosition >= candidate.startTime &&
+          playheadPosition < candidate.startTime + candidate.duration
+        ) {
+          activeMediaCount += 1;
+          if (candidate.id !== clip.id) return false;
+        }
+      }
+    }
+    if (activeMediaCount !== 1) return false;
+
+    if (getActiveTextClips(allTextClips, playheadPosition).length > 0) return false;
+    if (getActiveShapeClips(allShapeClips, playheadPosition).length > 0) return false;
+    if (getActiveSubtitles(allSubtitles, playheadPosition).length > 0) return false;
+
+    return true;
+  }, [
+    interactionMediaClip,
+    interactionMediaItem,
+    isPlaying,
+    cropMode,
+    playheadPosition,
+    timelineTracks,
+    allTextClips,
+    allShapeClips,
+    allSubtitles,
+  ]);
+
+  useEffect(() => {
+    if (
+      !canUseRealtimeDomTransform ||
+      interactionMode === "none" ||
+      interactionMediaItem?.type !== "video"
+    ) {
+      return;
+    }
+
+    const video = interactionMediaVideoRef.current;
+    const clip = interactionMediaClip;
+    if (!video || !clip) return;
+
+    const inPoint = clip.inPoint ?? 0;
+    const outPoint = clip.outPoint ?? Number.POSITIVE_INFINITY;
+    const sourceTime = Math.max(
+      inPoint,
+      Math.min(outPoint, inPoint + Math.max(0, playheadPosition - clip.startTime)),
+    );
+
+    const syncTime = () => {
+      try {
+        video.pause();
+        if (Number.isFinite(sourceTime) && Math.abs(video.currentTime - sourceTime) > 0.02) {
+          video.currentTime = sourceTime;
+        }
+      } catch {
+        // The browser may reject a seek before metadata is ready.
+      }
+    };
+
+    if (video.readyState >= 1) {
+      syncTime();
+      return;
+    }
+
+    video.addEventListener("loadedmetadata", syncTime, { once: true });
+    return () => video.removeEventListener("loadedmetadata", syncTime);
+  }, [
+    canUseRealtimeDomTransform,
+    interactionMode,
+    interactionMediaItem?.type,
+    interactionMediaClip,
+    playheadPosition,
+    interactionMediaUrl,
+  ]);
+
   const selectedTextClipId = useMemo(() => {
     const textClipSelection = selectedItems.find(
       (item) => item.type === "text-clip",
@@ -4559,8 +4674,26 @@ export const Preview: React.FC = () => {
 
     const displayScale = actualWidth / canvasWidth;
 
-    const clipWidth = canvasWidth * transform.scale.x * displayScale;
-    const clipHeight = canvasHeight * transform.scale.y * displayScale;
+    const mediaItem = getMediaItem(clip.mediaId);
+    const sourceWidth = mediaItem?.metadata?.width || canvasWidth;
+    const sourceHeight = mediaItem?.metadata?.height || canvasHeight;
+    const sourceAspect =
+      sourceWidth > 0 && sourceHeight > 0
+        ? sourceWidth / sourceHeight
+        : canvasAspect;
+
+    let baseWidth: number;
+    let baseHeight: number;
+    if (sourceAspect > canvasAspect) {
+      baseWidth = canvasWidth;
+      baseHeight = canvasWidth / sourceAspect;
+    } else {
+      baseHeight = canvasHeight;
+      baseWidth = canvasHeight * sourceAspect;
+    }
+
+    const clipWidth = baseWidth * transform.scale.x * displayScale;
+    const clipHeight = baseHeight * transform.scale.y * displayScale;
 
     const offsetX = transform.position.x * displayScale;
     const offsetY = transform.position.y * displayScale;
@@ -4579,7 +4712,10 @@ export const Preview: React.FC = () => {
       centerX,
       centerY,
       displayScale,
+      baseWidth,
+      baseHeight,
       rotation: transform.rotation || 0,
+      opacity: transform.opacity ?? 1,
     };
   }, [
     selectedClip,
@@ -4588,6 +4724,8 @@ export const Preview: React.FC = () => {
     settings.height,
     canvasSize,
     liveTransform,
+    getMediaItem,
+    project.modifiedAt,
   ]);
 
   const textClipBounds = useMemo(() => {
@@ -5271,7 +5409,9 @@ export const Preview: React.FC = () => {
               updateShapeTransform(pendingOverlay.id, pendingOverlay.transform);
               pendingOverlayTransformRef.current = null;
             }
-            renderInteractiveFrame();
+            if (!canUseRealtimeDomTransform) {
+              renderInteractiveFrame();
+            }
             rafIdRef.current = null;
           });
         }
@@ -5477,8 +5617,10 @@ export const Preview: React.FC = () => {
         let newX = startTransform.x;
         let newY = startTransform.y;
 
-        const scaleDeltaX = deltaX / displayScale / (settings.width / 2);
-        const scaleDeltaY = deltaY / displayScale / (settings.height / 2);
+        const scaleDeltaX =
+          deltaX / displayScale / Math.max(1, clipBounds.baseWidth / 2);
+        const scaleDeltaY =
+          deltaY / displayScale / Math.max(1, clipBounds.baseHeight / 2);
 
         switch (activeHandle) {
           case "e":
@@ -5577,7 +5719,9 @@ export const Preview: React.FC = () => {
               pendingTransformRef.current.clipId,
               pendingTransformRef.current.transform,
             );
-            renderInteractiveFrame();
+            if (!canUseRealtimeDomTransform) {
+              renderInteractiveFrame();
+            }
           }
           rafIdRef.current = null;
         });
@@ -5599,6 +5743,7 @@ export const Preview: React.FC = () => {
       updateTextTransform,
       updateShapeTransform,
       renderInteractiveFrame,
+      canUseRealtimeDomTransform,
     ],
   );
 
@@ -5880,8 +6025,59 @@ export const Preview: React.FC = () => {
             className="w-full h-full object-contain bg-black"
             style={{
               cursor: hoveredGraphicClipId && !isPlaying ? "pointer" : "default",
+              opacity:
+                canUseRealtimeDomTransform &&
+                interactionMode !== "none" &&
+                interactionMediaUrl
+                  ? 0
+                  : 1,
             }}
           />
+
+          {/* Frameo fast free-transform preview: mirrors Export-to-video by
+              transforming the actual media element directly while dragging. */}
+          {canUseRealtimeDomTransform &&
+            interactionMode !== "none" &&
+            interactionMediaUrl &&
+            clipBounds &&
+            interactionMediaItem &&
+            (interactionMediaItem.type === "video" ? (
+              <video
+                ref={interactionMediaVideoRef}
+                src={interactionMediaUrl}
+                muted
+                playsInline
+                preload="auto"
+                className="absolute pointer-events-none z-10"
+                style={{
+                  left: clipBounds.x,
+                  top: clipBounds.y,
+                  width: clipBounds.width,
+                  height: clipBounds.height,
+                  transform: `rotate(${clipBounds.rotation}deg)`,
+                  transformOrigin: "50% 50%",
+                  objectFit: "fill",
+                  opacity: clipBounds.opacity,
+                }}
+              />
+            ) : (
+              <img
+                src={interactionMediaUrl}
+                alt=""
+                draggable={false}
+                className="absolute pointer-events-none z-10 select-none"
+                style={{
+                  left: clipBounds.x,
+                  top: clipBounds.y,
+                  width: clipBounds.width,
+                  height: clipBounds.height,
+                  transform: `rotate(${clipBounds.rotation}deg)`,
+                  transformOrigin: "50% 50%",
+                  objectFit: "fill",
+                  opacity: clipBounds.opacity,
+                }}
+              />
+            ))}
 
           {/* Processing Overlay */}
           <ProcessingOverlay />
@@ -5968,6 +6164,8 @@ export const Preview: React.FC = () => {
                 top: clipBounds.y,
                 width: clipBounds.width,
                 height: clipBounds.height,
+                transform: `rotate(${clipBounds.rotation || 0}deg)`,
+                transformOrigin: "50% 50%",
               }}
             >
               {/* Selection border */}
@@ -6068,6 +6266,8 @@ export const Preview: React.FC = () => {
                 top: textClipBounds.y,
                 width: textClipBounds.width,
                 height: textClipBounds.height,
+                transform: `rotate(${textClipBounds.rotation || 0}deg)`,
+                transformOrigin: "50% 50%",
               }}
             >
               {/* Selection border - cyan for text clips */}
@@ -6166,6 +6366,8 @@ export const Preview: React.FC = () => {
                 top: shapeClipBounds.y,
                 width: shapeClipBounds.width,
                 height: shapeClipBounds.height,
+                transform: `rotate(${shapeClipBounds.rotation || 0}deg)`,
+                transformOrigin: "50% 50%",
               }}
             >
               {selectedShapeClip.type !== "svg" && (
