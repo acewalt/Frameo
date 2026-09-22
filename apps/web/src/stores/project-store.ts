@@ -2032,15 +2032,21 @@ export const useProjectStore = create<ProjectState>()(
 
       reorderTrack: async (trackId: string, newPosition: number) => {
         const { project, actionExecutor } = get();
+        const projectCopy = structuredClone(project);
         const action: Action = {
           type: "track/reorder",
           id: uuidv4(),
           timestamp: Date.now(),
           params: { trackId, newPosition },
         };
-        const result = await actionExecutor.execute(action, project);
+        const result = await actionExecutor.execute(action, projectCopy);
         if (result.success) {
-          set({ project: { ...project, modifiedAt: Date.now() } });
+          set({
+            project: {
+              ...projectCopy,
+              modifiedAt: Date.now(),
+            },
+          });
         }
         return result;
       },
@@ -2169,6 +2175,10 @@ export const useProjectStore = create<ProjectState>()(
             ? startTime
             : calculateTimelineDuration(project);
 
+        const previousTrackIds = new Set(
+          project.timeline.tracks.map((track) => track.id),
+        );
+
         const trackResult = await addTrack(trackType);
         if (!trackResult.success) {
           return trackResult;
@@ -2176,7 +2186,9 @@ export const useProjectStore = create<ProjectState>()(
 
         const { project: updatedProject, actionExecutor: exec } = get();
         const newTrack = updatedProject.timeline.tracks.find(
-          (t) => t.clips.length === 0 && t.type === trackType,
+          (track) =>
+            track.type === trackType &&
+            !previousTrackIds.has(track.id),
         );
 
         if (!newTrack) {
@@ -2371,15 +2383,21 @@ export const useProjectStore = create<ProjectState>()(
 
       moveClip: async (clipId: string, startTime: number, trackId?: string) => {
         const { project, actionExecutor } = get();
+        const projectCopy = structuredClone(project);
         const action: Action = {
           type: "clip/move",
           id: uuidv4(),
           timestamp: Date.now(),
           params: { clipId, startTime, trackId },
         };
-        const result = await actionExecutor.execute(action, project);
+        const result = await actionExecutor.execute(action, projectCopy);
         if (result.success) {
-          set({ project: { ...project } });
+          set({
+            project: {
+              ...projectCopy,
+              modifiedAt: Date.now(),
+            },
+          });
         }
         return result;
       },
