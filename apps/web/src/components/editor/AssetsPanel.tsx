@@ -491,14 +491,14 @@ export const AssetsPanel: React.FC = () => {
         for (let i = 0; i < fileArray.length; i++) {
           const file = fileArray[i];
           setImportProgress(
-            `Importing ${file.name} (${i + 1}/${fileArray.length})...`,
+            `${language === "es" ? "Importando" : "Importing"} ${file.name} (${i + 1}/${fileArray.length})...`,
           );
 
           const result = await importMedia(file);
 
           // If it's a video with audio, extract audio to separate track
           if (result.success && file.type.startsWith("video/")) {
-            setImportProgress(`Extracting audio from ${file.name}...`);
+            setImportProgress(`${language === "es" ? "Extrayendo audio de" : "Extracting audio from"} ${file.name}...`);
             // Audio extraction is handled by the importMedia function
             // The audio track is created automatically when adding to timeline
           }
@@ -580,7 +580,7 @@ export const AssetsPanel: React.FC = () => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
           setIsImporting(true);
-          setImportProgress(`Replacing asset...`);
+          setImportProgress(language === "es" ? "Reemplazando recurso..." : "Replacing asset...");
           try {
             await replaceMediaAsset(itemId, file);
           } catch (error) {
@@ -869,7 +869,7 @@ export const AssetsPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-2">
                     <AlertTriangle size={14} />
-                    <span>Show Only Missing Assets</span>
+                    <span>{language === "es" ? "Mostrar solo recursos faltantes" : "Show Only Missing Assets"}</span>
                   </div>
                   <div className="px-2 py-0.5 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
                     {missingAssetsCount}
@@ -880,7 +880,7 @@ export const AssetsPanel: React.FC = () => {
                   className="w-full px-3 py-2 rounded-lg border border-yellow-500/40 bg-yellow-500/5 text-yellow-500 text-xs font-medium transition-all hover:bg-yellow-500/15 flex items-center gap-2"
                 >
                   <RefreshCw size={14} />
-                  <span>Relink from Folder…</span>
+                  <span>{language === "es" ? "Revincular desde carpeta…" : "Relink from Folder…"}</span>
                 </button>
               </div>
             )}
