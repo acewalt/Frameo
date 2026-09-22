@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from "react";
 import {
   Search, Image as ImageIcon, Film, Music, Plus, Upload, Trash2, 
   Square, Circle, Triangle, Star, ArrowRight, Hexagon, FileCode, AlertTriangle, 
-  RefreshCw, Palette, LayoutGrid, Grid2x2, List, Sparkles, Video, 
+  RefreshCw, Palette, LayoutGrid, Grid2x2, List, Video, 
   Type, Shapes, Wand2, LayoutTemplate
 } from "lucide-react";
 import {
@@ -48,38 +48,6 @@ const formatDuration = (seconds: number): string => {
 type MediaViewMode = "large" | "small" | "list";
 type AssetsTab = "media" | "text" | "graphics" | "recipes" | "templates";
 
-const ASSETS_TABS: ReadonlyArray<{
-  value: AssetsTab;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "media",
-    label: "Media",
-    description: "Import footage, audio, and stills.",
-  },
-  {
-    value: "text",
-    label: "Text",
-    description: "Add title presets and caption elements.",
-  },
-  {
-    value: "graphics",
-    label: "Graphics",
-    description: "Create shapes, arrows, and SVG overlays.",
-  },
-  {
-    value: "recipes",
-    label: "Recipes",
-    description: "Apply clip-scoped looks, overlays, and text stacks.",
-  },
-  {
-    value: "templates",
-    label: "Project Templates",
-    description: "Load full-project starter layouts and presets.",
-  },
-] as const;
-
 const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   media: Video,
   text: Type,
@@ -102,8 +70,6 @@ const MediaThumbnail: React.FC<{
   onReplace: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onAddToTimeline: () => void;
-  onKieAI?: () => void;
-  onRetryKieAI?: () => void;
 }> = ({
   item,
   isSelected,
@@ -113,8 +79,6 @@ const MediaThumbnail: React.FC<{
   onReplace,
   onDragStart,
   onAddToTimeline,
-  onKieAI,
-  onRetryKieAI,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -153,11 +117,7 @@ const MediaThumbnail: React.FC<{
       ? "text-primary/50"
       : "text-status-info/50";
 
-  const borderClass = item.kieaiError
-    ? "border-red-500 ring-1 ring-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]"
-    : item.isPending
-    ? "border-purple-500 ring-1 ring-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
-    : item.isPlaceholder
+  const borderClass = item.isPlaceholder
       ? "border-yellow-500 ring-1 ring-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.3)]"
       : isSelected
         ? "border-primary ring-1 ring-primary/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
@@ -165,58 +125,21 @@ const MediaThumbnail: React.FC<{
 
   const hoverOverlay = (
     <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center gap-2 animate-in fade-in duration-200">
-      {item.kieaiError ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); onRetryKieAI?.(); }}
-          title="Generation failed — click to retry"
-          className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
-        >
-          <RefreshCw size={14} className="text-red-400" />
-        </button>
-      ) : item.isPending ? (
-        <div title="KieAI generation in progress…" className="p-2">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-        </div>
-      ) : item.isPlaceholder ? (
+      {item.isPlaceholder ? (
         <>
-          <button
-            onClick={(e) => { e.stopPropagation(); onReplace(); }}
-            title="Replace asset"
-            className="p-2 bg-yellow-500/20 rounded-full hover:bg-yellow-500/40 backdrop-blur-sm transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); onReplace(); }} title="Replace asset" className="p-2 bg-yellow-500/20 rounded-full hover:bg-yellow-500/40 backdrop-blur-sm transition-colors">
             <RefreshCw size={14} className="text-yellow-500" />
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            title="Delete"
-            className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete" className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors">
             <Trash2 size={14} className="text-red-400" />
           </button>
         </>
       ) : (
         <>
-          {item.type === "image" && onKieAI && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onKieAI(); }}
-              title="Create with KieAI"
-              className="p-2 bg-purple-500/20 rounded-full hover:bg-purple-500/40 backdrop-blur-sm transition-colors"
-            >
-              <Sparkles size={14} className="text-purple-300" />
-            </button>
-          )}
-          <button
-            onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }}
-            title="Add to timeline"
-            className="p-2 bg-primary/20 rounded-full hover:bg-primary/40 backdrop-blur-sm transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }} title="Add to timeline" className="p-2 bg-primary/20 rounded-full hover:bg-primary/40 backdrop-blur-sm transition-colors">
             <Plus size={14} className="text-primary" />
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            title="Delete"
-            className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
-          >
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete" className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors">
             <Trash2 size={14} className="text-red-400" />
           </button>
         </>
@@ -245,16 +168,6 @@ const MediaThumbnail: React.FC<{
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Icon size={14} className={iconColor} />
-            </div>
-          )}
-          {item.kieaiError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-red-500/10">
-              <AlertTriangle size={12} className="text-red-400" />
-            </div>
-          )}
-          {!item.kieaiError && item.isPending && (
-            <div className="absolute inset-0 flex items-center justify-center bg-purple-500/10">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
             </div>
           )}
           {!item.kieaiError && !item.isPending && item.isPlaceholder && (
@@ -315,15 +228,6 @@ const MediaThumbnail: React.FC<{
               </>
             ) : (
               <>
-                {item.type === "image" && onKieAI && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onKieAI(); }}
-                    title="Create with KieAI"
-                    className="p-1 bg-purple-500/20 rounded hover:bg-purple-500/40 transition-colors"
-                  >
-                    <Sparkles size={12} className="text-purple-300" />
-                  </button>
-                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }}
                   title="Add to timeline"
@@ -349,12 +253,6 @@ const MediaThumbnail: React.FC<{
       </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          {item.type === "image" && onKieAI && (
-            <ContextMenuItem onClick={onKieAI}>
-              <Sparkles size={13} className="mr-2 text-primary" />
-              Create with KieAI
-            </ContextMenuItem>
-          )}
           <ContextMenuItem onClick={(e) => { (e as React.MouseEvent).stopPropagation?.(); onAddToTimeline(); }}>
             <Plus size={13} className="mr-2" />
             Add to Timeline
@@ -415,20 +313,8 @@ const MediaThumbnail: React.FC<{
         )}
 
         {/* KieAI Error Badge */}
-        {item.kieaiError && (
-          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-500 rounded text-[8px] text-white font-bold flex items-center gap-1">
-            <AlertTriangle size={8} />
-            Failed
-          </div>
-        )}
 
         {/* Pending KieAI Badge */}
-        {!item.kieaiError && item.isPending && (
-          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-purple-500 rounded text-[8px] text-white font-bold flex items-center gap-1">
-            <div className="h-2 w-2 animate-spin rounded-full border border-white border-t-transparent" />
-            AI
-          </div>
-        )}
 
         {/* Missing Asset Badge */}
         {!item.kieaiError && !item.isPending && item.isPlaceholder && (
@@ -446,18 +332,8 @@ const MediaThumbnail: React.FC<{
         )}
 
         {/* Error overlay */}
-        {item.kieaiError && !isHovered && (
-          <div className="absolute inset-0 flex items-center justify-center bg-red-500/10">
-            <AlertTriangle size={viewMode === "small" ? 20 : 32} className="text-red-400/60" />
-          </div>
-        )}
 
         {/* Pending overlay */}
-        {!item.kieaiError && item.isPending && !isHovered && (
-          <div className="absolute inset-0 flex items-center justify-center bg-purple-500/10">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-400 border-t-transparent" />
-          </div>
-        )}
 
         {/* Warning icon overlay for placeholders */}
         {!item.kieaiError && !item.isPending && item.isPlaceholder && !isHovered && (
@@ -500,12 +376,6 @@ const MediaThumbnail: React.FC<{
     </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        {item.type === "image" && onKieAI && (
-          <ContextMenuItem onClick={onKieAI}>
-            <Sparkles size={13} className="mr-2 text-primary" />
-            Create with KieAI
-          </ContextMenuItem>
-        )}
         <ContextMenuItem onClick={() => onAddToTimeline()}>
           <Plus size={13} className="mr-2" />
           Add to Timeline
@@ -547,6 +417,14 @@ const LoadingIndicator: React.FC<{ message: string }> = ({ message }) => (
 );
 
 export const AssetsPanel: React.FC = () => {
+  const { t } = useI18n();
+  const ASSETS_TABS: ReadonlyArray<{ value: AssetsTab; label: string; description: string }> = [
+    { value: "media", label: t("media"), description: t("media") },
+    { value: "text", label: t("text"), description: t("text") },
+    { value: "graphics", label: t("graphics"), description: t("graphics") },
+    { value: "recipes", label: t("recipes"), description: t("recipes") },
+    { value: "templates", label: t("projectTemplates"), description: t("projectTemplates") },
+  ];
   const { t } = useI18n();
   const tabLabel = (tab: AssetsTab) => tab === "media" ? t("media") : tab === "text" ? t("text") : tab === "graphics" ? t("graphics") : tab === "recipes" ? t("recipes") : t("projectTemplates");
   const tabDescription = (tab: AssetsTab) => tab === "media" ? t("mediaDescription") : tab === "text" ? t("textDescription") : tab === "graphics" ? t("graphicsDescription") : tab === "recipes" ? t("recipesDescription") : t("templatesDescription");
