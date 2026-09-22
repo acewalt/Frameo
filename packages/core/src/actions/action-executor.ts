@@ -60,11 +60,11 @@ export class ActionExecutor {
         },
       };
     }
-    const projectSnapshot = JSON.parse(JSON.stringify(project));
-    const inverseAction = this.inverseGenerator.generate(
-      action,
-      projectSnapshot,
-    );
+    // InverseActionGenerator reads the pre-mutation project synchronously
+    // and clones the specific track/clip/media payload it needs. Serializing the
+    // entire project here was extremely expensive for video projects and caused
+    // timeline drags to stall.
+    const inverseAction = this.inverseGenerator.generate(action, project);
     try {
       await this.applyAction(action as TimelineAction, project);
       this.history.push(action, inverseAction);
