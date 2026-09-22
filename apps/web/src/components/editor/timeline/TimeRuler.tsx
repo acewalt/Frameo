@@ -100,7 +100,7 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
   scrollXRef.current = scrollX;
 
   const getTimeFromEvent = useCallback(
-    (e: MouseEvent | React.MouseEvent) => {
+    (e: PointerEvent | React.PointerEvent) => {
       const grandparent = rulerRef.current?.parentElement?.parentElement;
       if (!grandparent) return 0;
       const rect = grandparent.getBoundingClientRect();
@@ -114,6 +114,7 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* best-effort */ }
       setIsDragging(true);
       onScrubStart?.();
       const time = getTimeFromEvent(e);
@@ -157,7 +158,7 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       return snapped;
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       e.preventDefault();
       const rawTime = getTimeFromEvent(e);
       const now = performance.now();
@@ -182,7 +183,7 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handlePointerUp = (e: PointerEvent) => {
       e.preventDefault();
       if (rafId !== null) cancelAnimationFrame(rafId);
       if (latestTime !== null) onSeek(latestTime);
@@ -190,23 +191,25 @@ export const TimeRuler: React.FC<TimeRulerProps> = ({
       onScrubEnd?.();
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", handlePointerUp, { passive: false });
+    window.addEventListener("pointercancel", handlePointerUp, { passive: false });
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }, [isDragging, getTimeFromEvent, onSeek, onScrubEnd, safePixelsPerSecond]);
 
   return (
     <div
       ref={rulerRef}
-      className={`h-8 border-b border-border flex items-end relative bg-background-secondary select-none ${
+      className={`h-8 border-b border-border flex items-end relative bg-background-secondary select-none touch-none ${
         isDragging ? "cursor-grabbing" : "cursor-pointer"
       }`}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
       style={{ cursor: isDragging ? "grabbing" : "pointer" }}
     >
       {ticks.map((tick) => (
