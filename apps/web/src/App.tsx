@@ -134,7 +134,7 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen w-screen bg-background text-text-primary overflow-hidden">
+      <div className="h-[100dvh] sm:h-screen w-screen bg-background text-text-primary overflow-hidden">
         {isSharePage ? (
           <SharePage shareId={params.shareId!} />
         ) : showWelcome ? (
