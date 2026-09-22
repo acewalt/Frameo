@@ -4,6 +4,7 @@ import { useProjectStore } from "../../stores/project-store";
 import { useTimelineStore } from "../../stores/timeline-store";
 import { useUIStore } from "../../stores/ui-store";
 import { useEngineStore } from "../../stores/engine-store";
+import { useI18n } from "../../i18n";
 import type { Transform, FitMode, Clip, EditingTemplatePrimitive } from "@openreel/core";
 import {
   ChromaKeyEngine,
@@ -53,7 +54,6 @@ import {
 } from "./inspector";
 import { OPENREEL_TRANSCRIBE_URL } from "../../config/api-endpoints";
 import { AutoEditPanel } from "./panels/AutoEditPanel";
-import { HighlightExtractorPanel } from "./panels/HighlightExtractorPanel";
 import {
   EditingTemplateControls,
   mergeEditingTemplateControlValues,
@@ -112,14 +112,15 @@ const Section: React.FC<{
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-50">
-    <p className="text-sm text-text-secondary mb-2">No selection</p>
-    <p className="text-xs text-text-muted">
-      Select a clip to view its properties
-    </p>
-  </div>
-);
+const EmptyState: React.FC = () => {
+  const { t } = useI18n();
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-50">
+      <p className="text-sm text-text-secondary mb-2">{t("noSelection")}</p>
+      <p className="text-xs text-text-muted">{t("selectClip")}</p>
+    </div>
+  );
+};
 
 const ParticleEffectsSectionWrapper: React.FC<{
   clipId: string;
@@ -190,6 +191,7 @@ const ParticleEffectsSectionWrapper: React.FC<{
 };
 
 export const InspectorPanel: React.FC = () => {
+  const { t } = useI18n();
   // Stores
   const {
     getClip,
@@ -1147,19 +1149,12 @@ export const InspectorPanel: React.FC = () => {
               </Section>
             )}
 
-            {/* AI Highlight Extractor */}
-            {showAudioEffects && (
-              <Section title="AI Highlights" sectionId="ai-highlights" defaultOpen={false}>
-                <HighlightExtractorPanel clipId={clipId} />
-              </Section>
-            )}
-
             {/* Transform */}
             {showTransformControls && (
-              <Section title="Transform" sectionId="transform">
+              <Section title={t("transform")} sectionId="transform">
                 <div className="space-y-3">
                   <LabeledSlider
-                    label="Position X"
+                    label={`${t("position")} X`}
                     value={transform.position.x}
                     onChange={(x) =>
                       handleTransformChange({
@@ -1172,7 +1167,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="px"
                   />
                   <LabeledSlider
-                    label="Position Y"
+                    label={`${t("position")} Y`}
                     value={transform.position.y}
                     onChange={(y) =>
                       handleTransformChange({
@@ -1185,7 +1180,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="px"
                   />
                   <LabeledSlider
-                    label="Scale X"
+                    label={`${t("scale")} X`}
                     value={transform.scale.x * 100}
                     onChange={(x) =>
                       handleTransformChange({
@@ -1198,7 +1193,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="%"
                   />
                   <LabeledSlider
-                    label="Scale Y"
+                    label={`${t("scale")} Y`}
                     value={transform.scale.y * 100}
                     onChange={(y) =>
                       handleTransformChange({
@@ -1211,7 +1206,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="%"
                   />
                   <LabeledSlider
-                    label="Rotation"
+                    label={t("rotation")}
                     value={transform.rotation}
                     onChange={(rotation) => handleTransformChange({ rotation })}
                     min={-180}
@@ -1220,7 +1215,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="°"
                   />
                   <LabeledSlider
-                    label="Opacity"
+                    label={t("opacity")}
                     value={transform.opacity * 100}
                     onChange={(opacity) =>
                       handleTransformChange({ opacity: opacity / 100 })
@@ -1231,7 +1226,7 @@ export const InspectorPanel: React.FC = () => {
                     unit="%"
                   />
                   <LabeledSlider
-                    label="Border Radius"
+                    label={t("borderRadius")}
                     value={transform.borderRadius || 0}
                     onChange={(borderRadius) =>
                       handleTransformChange({ borderRadius })
