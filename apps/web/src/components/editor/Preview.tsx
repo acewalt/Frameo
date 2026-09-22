@@ -6266,9 +6266,9 @@ export const Preview: React.FC = () => {
         </div>
 
         {/* Controls row */}
-        <div className="h-12 px-6 flex items-center justify-between">
+        <div className="h-11 sm:h-12 px-2 sm:px-6 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="font-mono text-text-primary tabular-nums text-sm w-24 tracking-wider">
+          <div className="font-mono text-text-primary tabular-nums text-xs sm:text-sm w-20 sm:w-24 tracking-wider shrink-0">
             {formatTime(playheadPosition)}
           </div>
 
@@ -6286,7 +6286,7 @@ export const Preview: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 sm:gap-6 shrink-0">
           <IconButton
             icon={SkipBack}
             onClick={handleSkipBack}
@@ -6319,7 +6319,7 @@ export const Preview: React.FC = () => {
           />
         </div>
 
-        <div className="flex gap-2 items-center">
+        <div className="hidden sm:flex gap-2 items-center">
           <button
             onClick={() => setIsMuted(!isMuted)}
             className={`p-2 rounded-lg hover:bg-background-elevated transition-colors ${
