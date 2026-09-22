@@ -1,8 +1,8 @@
 {
-  "name": "openreel",
+  "name": "frameo",
   "version": "0.1.0",
   "private": true,
-  "description": "Professional video, audio, and photo editing in your browser",
+  "description": "Frameo — browser-based video editor built from the OpenReel MIT codebase",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @openreel/web dev",
@@ -38,12 +38,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Augani/openreel-video.git"
+    "url": "https://github.com/acewalt/Frameo.git"
   },
   "bugs": {
-    "url": "https://github.com/Augani/openreel-video/issues"
+    "url": "https://github.com/acewalt/Frameo/issues"
   },
-  "homepage": "https://openreel.video",
+  "homepage": "https://acewalt.github.io/Frameo/",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
