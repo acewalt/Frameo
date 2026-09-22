@@ -555,7 +555,8 @@ export const Preview: React.FC = () => {
 
   // Track if we're currently interacting to prevent re-renders during resize/move
   const isInteractingRef = useRef<boolean>(false);
-  // Throttle store updates during interaction (update at most every 32ms ~30fps)
+  // Commit at most once per animation frame; rendering itself is protected
+  // by renderInFlightRef so pointer movement cannot build a render queue.
   const lastStoreUpdateRef = useRef<number>(0);
   const STORE_UPDATE_THROTTLE_MS = 0;
   // Throttle playhead updates during playback to reduce React re-renders
@@ -5092,6 +5093,16 @@ export const Preview: React.FC = () => {
     [interactionMode, findGraphicClipAtPoint, select, clipAtPlayhead],
   );
 
+  const renderInteractiveFrame = useCallback(() => {
+    if (renderInFlightRef.current) return;
+    renderInFlightRef.current = true;
+    renderFrameDirectly(playheadPosition)
+      .catch(() => undefined)
+      .finally(() => {
+        renderInFlightRef.current = false;
+      });
+  }, [renderFrameDirectly, playheadPosition]);
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (interactionMode === "none" || !interactionStartRef.current) return;
@@ -5173,6 +5184,7 @@ export const Preview: React.FC = () => {
               lastStoreUpdateRef.current = now;
               updateTextTransform(pending.id, pending.transform);
               pendingOverlayTransformRef.current = null;
+              renderInteractiveFrame();
             }
             rafIdRef.current = null;
           });
@@ -5257,6 +5269,7 @@ export const Preview: React.FC = () => {
               lastStoreUpdateRef.current = now;
               updateShapeTransform(pending.id, pending.transform);
               pendingOverlayTransformRef.current = null;
+              renderInteractiveFrame();
             }
             rafIdRef.current = null;
           });
@@ -5391,6 +5404,7 @@ export const Preview: React.FC = () => {
               pendingTransformRef.current.clipId,
               pendingTransformRef.current.transform,
             );
+            renderInteractiveFrame();
           }
           rafIdRef.current = null;
         });
@@ -5410,6 +5424,8 @@ export const Preview: React.FC = () => {
       textClipBounds,
       activeTextClip,
       updateTextTransform,
+      updateShapeTransform,
+      renderInteractiveFrame,
     ],
   );
 
