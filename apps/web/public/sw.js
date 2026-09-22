@@ -1,5 +1,5 @@
 /**
- * OpenReel Service Worker
+ * Frameo Service Worker
  *
  * Handles offline functionality by caching application assets.
  * Implements a cache-first strategy for static assets and network-first for API calls.
@@ -10,15 +10,16 @@
  * - 35.4: Inform user that AI requires internet connectivity
  */
 
-const CACHE_NAME = "openreel-v1";
-const STATIC_CACHE_NAME = "openreel-static-v1";
-const DYNAMIC_CACHE_NAME = "openreel-dynamic-v1";
+const CACHE_NAME = "frameo-v1";
+const STATIC_CACHE_NAME = "frameo-static-v1";
+const DYNAMIC_CACHE_NAME = "frameo-dynamic-v1";
 
 /**
  * Static assets to cache on install
  * These are the core application files needed for offline functionality
  */
-const STATIC_ASSETS = ["/", "/index.html", "/manifest.json"];
+const BASE_PATH = "/Frameo/";
+const STATIC_ASSETS = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.json`];
 
 /**
  * Patterns for assets that should be cached dynamically
@@ -38,16 +39,8 @@ const CACHEABLE_PATTERNS = [
   /\.ico$/,
 ];
 
-/**
- * Patterns for requests that should never be cached (AI features, etc.)
- */
-const NO_CACHE_PATTERNS = [
-  /api\.anthropic\.com/,
-  /api\.openai\.com/,
-  /whisper/,
-  /transcribe/,
-  /\/api\//,
-];
+/** API and remote requests are always network-only. */
+const NO_CACHE_PATTERNS = [/\/api\//];
 
 /**
  * Check if a URL should be cached
@@ -62,14 +55,6 @@ function shouldCache(url) {
 
   // Cache if matches cacheable patterns
   return CACHEABLE_PATTERNS.some((pattern) => pattern.test(urlString));
-}
-
-/**
- * Check if a request is for an AI feature
- */
-function isAIRequest(url) {
-  const urlString = url.toString();
-  return NO_CACHE_PATTERNS.some((pattern) => pattern.test(urlString));
 }
 
 /**
@@ -111,7 +96,7 @@ self.addEventListener("activate", (event) => {
             .filter((name) => {
               // Delete old versions of our caches
               return (
-                name.startsWith("openreel-") &&
+                name.startsWith("frameo-") &&
                 name !== STATIC_CACHE_NAME &&
                 name !== DYNAMIC_CACHE_NAME
               );
@@ -147,16 +132,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Handle AI requests - network only with offline message
-  if (isAIRequest(url)) {
+  // Handle API requests as network-only
+  if (NO_CACHE_PATTERNS.some((pattern) => pattern.test(url.toString()))) {
     event.respondWith(
       fetch(request).catch(() => {
-        // Return a JSON response indicating AI is unavailable offline
-        return new Response(
-          JSON.stringify({
-            error: "AI_OFFLINE",
-            message:
-              "AI features require an internet connection. Please connect to the internet to use this feature.",
+        // Return a generic offline response
+          message: "This online service is unavailable while offline.",
           }),
           {
             status: 503,
@@ -287,7 +268,7 @@ async function getCacheStatus() {
   let totalEntries = 0;
 
   for (const name of cacheNames) {
-    if (name.startsWith("openreel-")) {
+    if (name.startsWith("frameo-")) {
       const cache = await caches.open(name);
       const keys = await cache.keys();
       totalEntries += keys.length;
@@ -295,20 +276,20 @@ async function getCacheStatus() {
   }
 
   return {
-    cacheNames: cacheNames.filter((n) => n.startsWith("openreel-")),
+    cacheNames: cacheNames.filter((n) => n.startsWith("frameo-")),
     totalEntries,
     version: CACHE_NAME,
   };
 }
 
 /**
- * Clear all OpenReel caches
+ * Clear all Frameo caches
  */
 async function clearAllCaches() {
   const cacheNames = await caches.keys();
   await Promise.all(
     cacheNames
-      .filter((name) => name.startsWith("openreel-"))
+      .filter((name) => name.startsWith("frameo-"))
       .map((name) => caches.delete(name))
   );
 }
