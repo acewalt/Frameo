@@ -61,6 +61,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
   const [isPendingDrag, setIsPendingDrag] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [dragYOffset, setDragYOffset] = useState(0);
+  const [dragPreviewTime, setDragPreviewTime] = useState(clip.startTime);
   const [isInvalidDrop, setIsInvalidDrop] = useState(false);
   const [isTrimming, setIsTrimming] = useState(false);
   const [trimEdge, setTrimEdge] = useState<"left" | "right" | null>(null);
@@ -79,7 +80,11 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
     scrollTop: 0,
   });
   const mousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const pendingDropRef = useRef<{ time: number; targetTrackId?: string }>({ time: 0 });
+  const pendingDropRef = useRef<{
+    time: number;
+    targetTrackId?: string;
+    valid: boolean;
+  }>({ time: clip.startTime, valid: true });
   const dragPendingRef = useRef<{ active: boolean; startX: number; startY: number }>({
     active: false,
     startX: 0,
@@ -88,6 +93,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
   const clipRef = useRef<HTMLDivElement>(null);
 
   const left = clip.startTime * pixelsPerSecond;
+  const dragLeft = dragPreviewTime * pixelsPerSecond;
   const width = clip.duration * pixelsPerSecond;
 
   const isVideo = track.type === "video";
@@ -102,10 +108,12 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
     onSelect(clip.id, e.shiftKey || e.metaKey);
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
     if (track.locked || isTrimming) return;
     e.stopPropagation();
+    e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* best effort */ }
 
     const rect = clipRef.current?.parentElement?.getBoundingClientRect();
     const clipRect = clipRef.current?.getBoundingClientRect();
@@ -123,15 +131,19 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
     mousePositionRef.current = { x: e.clientX, y: e.clientY };
     dragPendingRef.current = { active: true, startX: e.clientX, startY: e.clientY };
     setDragYOffset(0);
+    setDragPreviewTime(clip.startTime);
+    pendingDropRef.current = { time: clip.startTime, valid: true };
     setIsInvalidDrop(false);
     setIsPendingDrag(true);
   };
 
-  const handleTrimMouseDown =
-    (edge: "left" | "right") => (e: React.MouseEvent) => {
-      if (e.button !== 0) return;
+  const handleTrimPointerDown =
+    (edge: "left" | "right") => (e: React.PointerEvent) => {
+      if (e.button !== 0 && e.pointerType === "mouse") return;
       if (track.locked || !onTrimClip) return;
       e.stopPropagation();
+      e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* best effort */ }
       setIsTrimming(true);
       setTrimEdge(edge);
       trimStartRef.current = {
@@ -145,7 +157,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
   useEffect(() => {
     if (!isPendingDrag) return;
 
-    const handlePendingMouseMove = (e: MouseEvent) => {
+    const handlePendingPointerMove = (e: PointerEvent) => {
       const dx = e.clientX - dragPendingRef.current.startX;
       const dy = e.clientY - dragPendingRef.current.startY;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -157,18 +169,20 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       }
     };
 
-    const handlePendingMouseUp = (e: MouseEvent) => {
+    const handlePendingPointerUp = (e: PointerEvent) => {
       dragPendingRef.current.active = false;
       setIsPendingDrag(false);
       onSelect(clip.id, e.shiftKey || e.metaKey);
     };
 
-    window.addEventListener("mousemove", handlePendingMouseMove);
-    window.addEventListener("mouseup", handlePendingMouseUp);
+    window.addEventListener("pointermove", handlePendingPointerMove, { passive: false });
+    window.addEventListener("pointerup", handlePendingPointerUp, { passive: false });
+    window.addEventListener("pointercancel", handlePendingPointerUp, { passive: false });
 
     return () => {
-      window.removeEventListener("mousemove", handlePendingMouseMove);
-      window.removeEventListener("mouseup", handlePendingMouseUp);
+      window.removeEventListener("pointermove", handlePendingPointerMove);
+      window.removeEventListener("pointerup", handlePendingPointerUp);
+      window.removeEventListener("pointercancel", handlePendingPointerUp);
     };
   }, [isPendingDrag, clip.id, onSelect]);
 
@@ -205,7 +219,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
 
     animationFrameId = requestAnimationFrame(scrollLoop);
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       mousePositionRef.current.x = e.clientX;
       mousePositionRef.current.y = e.clientY;
 
@@ -252,23 +266,32 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       const isOverDifferentTrackType = hoveredTrackType !== undefined && hoveredTrackType !== track.type;
       setIsInvalidDrop(isOverDifferentTrackType);
 
-      pendingDropRef.current = { time: snapResult.time, targetTrackId };
-      onMoveClip(clip.id, snapResult.time, undefined);
-      onSnapIndicator(snapResult.snapped && snapResult.snapPoint ? snapResult.snapPoint.time : null);
+      pendingDropRef.current = {
+        time: snapResult.time,
+        targetTrackId,
+        valid: !isOverDifferentTrackType,
+      };
+      setDragPreviewTime(snapResult.time);
+      onSnapIndicator(
+        snapResult.snapped && snapResult.snapPoint
+          ? snapResult.snapPoint.time
+          : null,
+      );
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
 
-      const { time, targetTrackId } = pendingDropRef.current;
-      if (targetTrackId) {
+      const { time, targetTrackId, valid } = pendingDropRef.current;
+      if (valid) {
         onMoveClip(clip.id, time, targetTrackId);
       }
 
       setIsDragging(false);
       setDragYOffset(0);
+      setDragPreviewTime(clip.startTime);
       setIsInvalidDrop(false);
       onSnapIndicator(null);
     };
@@ -302,7 +325,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
   useEffect(() => {
     if (!isTrimming || !trimEdge || !onTrimClip) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       const deltaX = e.clientX - trimStartRef.current.mouseX;
       const deltaTime = deltaX / pixelsPerSecond;
 
@@ -326,7 +349,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setIsTrimming(false);
       setTrimEdge(null);
       document.body.style.cursor = "";
@@ -353,8 +376,8 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
         <div
           ref={clipRef}
           onClick={handleClick}
-          onMouseDown={handleMouseDown}
-          className={`group absolute top-1 bottom-1 rounded-lg overflow-hidden shadow-sm ${
+          onPointerDown={handlePointerDown}
+          className={`group absolute top-1 bottom-1 rounded-lg overflow-hidden shadow-sm touch-none select-none ${
             isDragging
               ? `cursor-grabbing z-50 ${isInvalidDrop ? "opacity-50 ring-2 ring-red-500 border-red-500" : "opacity-90 shadow-xl"}`
               : "cursor-grab"
@@ -369,7 +392,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
           }`}
           style={{
             transform: isDragging
-              ? `translate(${left}px, ${dragYOffset}px)`
+              ? `translate(${dragLeft}px, ${dragYOffset}px)`
               : `translateX(${left}px)`,
             width: `${width}px`,
             willChange: isInteracting ? 'transform, width' : 'auto',
@@ -526,7 +549,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       {(isVideo || isImage || isAudio) && onTrimClip && (
         <>
           <div
-            onMouseDown={handleTrimMouseDown("left")}
+            onPointerDown={handleTrimPointerDown("left")}
             className={`absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 flex items-center justify-center transition-opacity ${
               isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             } ${isSelected ? "bg-primary" : isAudio ? "hover:bg-blue-400/50" : isVideo ? "hover:bg-green-400/50" : "hover:bg-purple-400/50"}`}
@@ -538,7 +561,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
             )}
           </div>
           <div
-            onMouseDown={handleTrimMouseDown("right")}
+            onPointerDown={handleTrimPointerDown("right")}
             className={`absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 flex items-center justify-center transition-opacity ${
               isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             } ${isSelected ? "bg-primary" : isAudio ? "hover:bg-blue-400/50" : isVideo ? "hover:bg-green-400/50" : "hover:bg-purple-400/50"}`}
