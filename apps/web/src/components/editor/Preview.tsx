@@ -572,7 +572,10 @@ export const Preview: React.FC = () => {
   const STORE_UPDATE_THROTTLE_MS = 0;
   // Throttle playhead updates during playback to reduce React re-renders
   const lastPlayheadUpdateRef = useRef<number>(0);
-  const PLAYHEAD_UPDATE_THROTTLE_MS = 16;
+  const PLAYHEAD_UPDATE_THROTTLE_MS =
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+      ? 33
+      : 16;
   // Live transform state for immediate visual feedback during interaction
   const [liveTransform, setLiveTransform] = useState<{
     position: { x: number; y: number };
@@ -1552,7 +1555,7 @@ export const Preview: React.FC = () => {
               video.src = url;
               video.muted = true;
               video.playsInline = true;
-              video.preload = "metadata";
+              video.preload = "auto";
               video.crossOrigin = "anonymous";
 
               await new Promise<void>((res, rej) => {
@@ -2497,8 +2500,30 @@ export const Preview: React.FC = () => {
         return () => {};
       }
 
+      const originalCanvasWidth = canvas.width || settings.width;
+      const originalCanvasHeight = canvas.height || settings.height;
+      const isMobilePreview =
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 767px)").matches;
+      const hasOverlayContent =
+        imageClips.length > 0 ||
+        allTextClipsRef.current.length > 0 ||
+        allShapeClipsRef.current.length > 0 ||
+        allSubtitles.length > 0;
+      const useMobilePreviewResolution = isMobilePreview && !hasOverlayContent;
+      const mobilePreviewScale = useMobilePreviewResolution
+        ? Math.min(1, 960 / Math.max(settings.width, settings.height))
+        : 1;
+
+      if (mobilePreviewScale < 1) {
+        canvas.width = Math.max(2, Math.round(settings.width * mobilePreviewScale));
+        canvas.height = Math.max(2, Math.round(settings.height * mobilePreviewScale));
+      }
+
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        canvas.width = originalCanvasWidth;
+        canvas.height = originalCanvasHeight;
         onEnd();
         return () => {};
       }
@@ -2817,10 +2842,20 @@ export const Preview: React.FC = () => {
               y: transform.scale.y * emphasisState.scale * emphasisState.scaleY,
             },
             position: {
-              x: transform.position.x + emphasisState.offsetX * canvas.width,
-              y: transform.position.y + emphasisState.offsetY * canvas.height,
+              x: transform.position.x + emphasisState.offsetX * settings.width,
+              y: transform.position.y + emphasisState.offsetY * settings.height,
             },
             rotation: transform.rotation + emphasisState.rotation,
+          };
+        }
+
+        if (mobilePreviewScale < 1) {
+          transform = {
+            ...transform,
+            position: {
+              x: transform.position.x * mobilePreviewScale,
+              y: transform.position.y * mobilePreviewScale,
+            },
           };
         }
 
@@ -2952,9 +2987,15 @@ export const Preview: React.FC = () => {
           setPlayheadPosition(currentPlayhead);
         }
 
-        rafId = requestAnimationFrame(() => {
-          drawFrame();
-        });
+        if ("requestVideoFrameCallback" in video) {
+          video.requestVideoFrameCallback(() => {
+            void drawFrame();
+          });
+        } else {
+          rafId = requestAnimationFrame(() => {
+            void drawFrame();
+          });
+        }
       };
 
       const cleanup = () => {
@@ -2976,6 +3017,14 @@ export const Preview: React.FC = () => {
         currentVideoMediaIdRef.current = null;
         masterClock.stop();
         audioGraph.stopScheduler();
+
+        if (
+          canvas.width !== originalCanvasWidth ||
+          canvas.height !== originalCanvasHeight
+        ) {
+          canvas.width = originalCanvasWidth;
+          canvas.height = originalCanvasHeight;
+        }
       };
 
       rafId = requestAnimationFrame(() => { drawFrame(); });
@@ -2993,6 +3042,8 @@ export const Preview: React.FC = () => {
       renderOverlayClipsInTrackOrder,
       setPlayheadPosition,
       timelineTracks,
+      settings.width,
+      settings.height,
     ],
   );
 
