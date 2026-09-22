@@ -15,7 +15,6 @@ import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
 import type { MediaItem } from "@openreel/core";
 import { AspectRatioMatchDialog } from "./dialogs/AspectRatioMatchDialog";
-import { AIGenTab } from "./AIGenTab";
 import { RecipesTab } from "./panels/RecipesTab";
 import { TemplatesTab } from "./panels/TemplatesTab";
 import { useTtsAudioStore } from "../../stores/tts-store";
@@ -33,9 +32,7 @@ import {
   
   
 } from "@openreel/ui";
-import { KieAIImageDialog } from "./kieai/KieAIImageDialog";
 import { loadMediaBlob } from "../../services/media-storage";
-import { useKieAIStore } from "../../stores/kieai-store";
 
 const formatDuration = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -50,7 +47,7 @@ const formatDuration = (seconds: number): string => {
  * Shows thumbnail with metadata below (not overlaid)
  */
 type MediaViewMode = "large" | "small" | "list";
-type AssetsTab = "media" | "text" | "graphics" | "ai" | "recipes" | "templates";
+type AssetsTab = "media" | "text" | "graphics" | "recipes" | "templates";
 
 const ASSETS_TABS: ReadonlyArray<{
   value: AssetsTab;
@@ -73,11 +70,6 @@ const ASSETS_TABS: ReadonlyArray<{
     description: "Create shapes, arrows, and SVG overlays.",
   },
   {
-    value: "ai",
-    label: "AI Generate",
-    description: "Generate clips, captions, and assisted edits.",
-  },
-  {
     value: "recipes",
     label: "Recipes",
     description: "Apply clip-scoped looks, overlays, and text stacks.",
@@ -93,7 +85,6 @@ const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   media: Video,
   text: Type,
   graphics: Shapes,
-  ai: Sparkles,
   recipes: Wand2,
   templates: LayoutTemplate,
 };
@@ -560,14 +551,9 @@ export const AssetsPanel: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTabRaw] = useState<AssetsTab>("media");
-  const ttsHasUnsaved = useTtsAudioStore((s) => s.generatedAudio !== null && !s.isAudioSaved);
-
   const setActiveTab = useCallback((tab: AssetsTab) => {
-    if (activeTab === "ai" && tab !== "ai" && ttsHasUnsaved) {
-      toast.warning("Unsaved audio discarded", "Save to media or download next time to keep it.");
-    }
     setActiveTabRaw(tab);
-  }, [activeTab, ttsHasUnsaved]);
+  }, []);
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -587,8 +573,6 @@ export const AssetsPanel: React.FC = () => {
     "all" | "solid" | "gradient" | "pattern" | "mesh"
   >("all");
 
-  // KieAI image generation dialog
-  const [kieaiDialog, setKieaiDialog] = useState<{ file: File; previewUrl: string | null } | null>(null);
 
   // Project store
   const {
@@ -596,13 +580,10 @@ export const AssetsPanel: React.FC = () => {
     importMedia,
     deleteMedia,
     replaceMediaAsset,
-    updateSettings,
-    setKieAIItemState,
+    updateSettings
   } = useProjectStore();
   const mediaItems = project.mediaLibrary.items;
 
-  // KieAI store
-  const { retryTask } = useKieAIStore();
 
   // UI store
   const { select, isSelected, startDrag } = useUIStore();
@@ -903,28 +884,6 @@ export const AssetsPanel: React.FC = () => {
   );
 
   // Open KieAI dialog for an image asset
-  const handleOpenKieAI = useCallback(async (item: MediaItem) => {
-    try {
-      const blob = await loadMediaBlob(item.id);
-      if (!blob) {
-        toast.error("Asset not found", "Cannot load the image data for this asset.");
-        return;
-      }
-      const mimeType = blob.type || (item.name.match(/\.png$/i) ? "image/png" : "image/jpeg");
-      const file = new File([blob], item.name, { type: mimeType as string });
-      setKieaiDialog({ file, previewUrl: item.thumbnailUrl });
-    } catch (err) {
-      console.error("[KieAI] Failed to load media blob:", err);
-      toast.error("Failed to open KieAI", err instanceof Error ? err.message : "Unknown error");
-    }
-  }, []);
-
-  const handleRetryKieAI = useCallback((item: MediaItem) => {
-    if (!item.kieaiTaskId) return;
-    // Reset error state and re-activate polling
-    setKieAIItemState(item.id, true, false);
-    retryTask(item.kieaiTaskId);
-  }, [retryTask, setKieAIItemState]);
 
   const renderSectionContent = (tab: AssetsTab): React.ReactNode => {
     switch (tab) {
@@ -1020,8 +979,6 @@ export const AssetsPanel: React.FC = () => {
                         onReplace={() => handleReplaceAsset(item.id)}
                         onDragStart={(e) => handleItemDragStart(e, item)}
                         onAddToTimeline={() => handleAddToTimeline(item)}
-                        onKieAI={item.type === "image" && !item.isPending && !item.kieaiError ? () => handleOpenKieAI(item) : undefined}
-                        onRetryKieAI={item.kieaiError && item.kieaiTaskId ? () => handleRetryKieAI(item) : undefined}
                       />
                     ))}
                     {mediaViewMode === "list" ? (
@@ -1386,12 +1343,6 @@ export const AssetsPanel: React.FC = () => {
             </ScrollArea>
           </div>
         );
-      case "ai":
-        return (
-          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary content-area-fix">
-            <AIGenTab />
-          </div>
-        );
       case "recipes":
         return (
           <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary content-area-fix">
@@ -1491,15 +1442,6 @@ export const AssetsPanel: React.FC = () => {
           currentHeight={project.settings.height}
           onConfirm={handleConfirmAspectRatioMatch}
           onCancel={handleCancelAspectRatioMatch}
-        />
-      )}
-
-      {kieaiDialog && (
-        <KieAIImageDialog
-          open={true}
-          onClose={() => setKieaiDialog(null)}
-          sourceFile={kieaiDialog.file}
-          previewUrl={kieaiDialog.previewUrl}
         />
       )}
     </div>
