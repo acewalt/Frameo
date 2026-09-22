@@ -516,16 +516,16 @@ export const EditorInterface: React.FC = () => {
         <Toolbar />
 
         <div ref={editorBodyRef} className="relative min-h-0 flex-1 flex flex-col overflow-hidden">
-          <div className="min-h-[180px] flex-1 min-w-0 overflow-hidden bg-background">
+          <div className="min-h-[180px] flex-1 min-w-0 overflow-hidden bg-background flex flex-col">
             <PanelErrorBoundary name={language === "es" ? "Vista previa" : "Preview"}>
               <Preview />
             </PanelErrorBoundary>
           </div>
 
-          <div className="h-11 shrink-0 border-y border-border bg-background-secondary flex items-center justify-center gap-2 px-3 z-30">
+          <div className="h-10 shrink-0 border-y border-border bg-background-secondary flex items-center justify-center gap-2 px-2.5 z-30">
             <button
               onClick={() => setMobilePanel((panel) => panel === "assets" ? null : "assets")}
-              className={`h-8 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
+              className={`h-7.5 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
                 mobilePanel === "assets"
                   ? "border-primary/50 bg-primary/15 text-primary"
                   : "border-border bg-background-tertiary text-text-secondary"
@@ -536,7 +536,7 @@ export const EditorInterface: React.FC = () => {
             </button>
             <button
               onClick={() => setMobilePanel((panel) => panel === "inspector" ? null : "inspector")}
-              className={`h-8 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
+              className={`h-7.5 flex-1 max-w-40 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-medium transition-colors ${
                 mobilePanel === "inspector"
                   ? "border-primary/50 bg-primary/15 text-primary"
                   : "border-border bg-background-tertiary text-text-secondary"
