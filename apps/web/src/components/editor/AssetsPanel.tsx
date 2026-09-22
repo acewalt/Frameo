@@ -3,7 +3,7 @@ import {
   Search, Image as ImageIcon, Film, Music, Plus, Upload, Trash2, 
   Square, Circle, Triangle, Star, ArrowRight, Hexagon, FileCode, AlertTriangle, 
   RefreshCw, Palette, LayoutGrid, Grid2x2, List, Video, 
-  Type, Shapes, Wand2
+  Type, Shapes, Wand2, Layers3, LayoutTemplate
 } from "lucide-react";
 import {
   BACKGROUND_PRESETS,
@@ -17,6 +17,8 @@ import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
 import type { MediaItem } from "@openreel/core";
 import { AspectRatioMatchDialog } from "./dialogs/AspectRatioMatchDialog";
+import { RecipesTab } from "./panels/RecipesTab";
+import { TemplatesTab } from "./panels/TemplatesTab";
 import { toast } from "../../stores/notification-store";
 import { saveFileHandle, saveDirectoryHandle } from "../../services/media-storage";
 import {
@@ -46,7 +48,7 @@ const formatDuration = (seconds: number): string => {
  * Shows thumbnail with metadata below (not overlaid)
  */
 type MediaViewMode = "large" | "small" | "list";
-type AssetsTab = "media" | "text" | "graphics" | "effects" | "transitions";
+type AssetsTab = "media" | "text" | "graphics" | "effects" | "transitions" | "recipes" | "templates";
 
 const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   media: Video,
@@ -54,6 +56,8 @@ const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   graphics: Shapes,
   effects: Wand2,
   transitions: ArrowRight,
+  recipes: Layers3,
+  templates: LayoutTemplate,
 };
 
 const EFFECT_LIBRARY: ReadonlyArray<{ type: VideoEffectType; en: string; es: string; category: string }> = [
@@ -1313,6 +1317,18 @@ export const AssetsPanel: React.FC = () => {
                 </div>
               </div>
             </ScrollArea>
+          </div>
+        );
+      case "recipes":
+        return (
+          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary">
+            <RecipesTab />
+          </div>
+        );
+      case "templates":
+        return (
+          <div className="flex min-h-0 flex-1 flex-col border-t border-border/70 bg-background-secondary">
+            <TemplatesTab />
           </div>
         );
       case "transitions":
