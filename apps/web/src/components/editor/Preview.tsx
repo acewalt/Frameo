@@ -5900,6 +5900,11 @@ export const Preview: React.FC = () => {
               {selectedShapeClip.type !== "svg" && (
                 <div className="absolute inset-0 border-2 border-green-500 pointer-events-none" />
               )}
+              <div
+                className="absolute inset-0 pointer-events-auto cursor-move"
+                onMouseDown={handleShapeClipMouseDown}
+                title="Drag anywhere to move shape"
+              />
 
               {/* Move handle (center) */}
               <div
