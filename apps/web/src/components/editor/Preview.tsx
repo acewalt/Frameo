@@ -1152,11 +1152,14 @@ export const Preview: React.FC = () => {
         maxWidth: "none",
         maxHeight: "none",
         objectFit: "fill",
-        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale.x}, ${scale.y})`,
+        transform: `translate3d(-50%, -50%, 0) rotate(${rotation}deg) scale(${scale.x}, ${scale.y})`,
         transformOrigin: "50% 50%",
         opacity: baseTransform.opacity ?? 1,
         zIndex: (timelineTracks.length - trackIndex) * 100 + clipIndex,
         willChange: isPlaying || live ? "transform" : undefined,
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
+        contain: "paint",
       };
     },
     [
@@ -1197,7 +1200,7 @@ export const Preview: React.FC = () => {
       const wanted =
         (item.clip.inPoint || 0) +
         Math.max(0, playheadPosition - item.clip.startTime);
-      const tolerance = isPlaying ? 0.18 : 0.025;
+      const tolerance = isPlaying ? 0.45 : 0.025;
 
       video.playbackRate = playbackRate;
       video.muted =
@@ -1265,10 +1268,11 @@ export const Preview: React.FC = () => {
         return;
       }
 
-      // The real <video> elements animate independently. Updating React at
-      // ~30 fps is enough for the playhead and avoids re-rendering the whole
-      // editor at display refresh rate.
-      if (now - lastUiUpdate >= 33) {
+      // Native <video> elements animate at their own frame rate. Keep React
+      // out of their hot path: the editor UI/playhead only needs ~15 fps.
+      // This leaves substantially more main-thread time for browser video
+      // decode/compositing when two or more layers are playing.
+      if (now - lastUiUpdate >= 66) {
         lastUiUpdate = now;
         setPlayheadPosition(next);
       }
@@ -6617,7 +6621,7 @@ export const Preview: React.FC = () => {
           />
 
           {simpleDomPreviewEligible && (
-            <div className="absolute inset-0 overflow-hidden bg-black pointer-events-none z-[5]">
+            <div className="absolute inset-0 overflow-hidden bg-black pointer-events-none z-[5] isolate [transform:translateZ(0)]">
               {domPreviewItems.map((item) =>
                 item.mediaType === "video" ? (
                   <video
@@ -6788,7 +6792,7 @@ export const Preview: React.FC = () => {
           {/* Resize/Transform Overlay */}
           {!cropMode && showResizeHandles && clipBounds && (
             <div
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none z-40"
               style={{
                 left: clipBounds.x,
                 top: clipBounds.y,
