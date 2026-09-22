@@ -15,6 +15,7 @@ import {
 import { useProjectStore } from "../../../stores/project-store";
 import { useUIStore } from "../../../stores/ui-store";
 import { toast } from "../../../stores/notification-store";
+import { useI18n } from "../../../i18n";
 import {
   EditingTemplateControls,
   getEditingTemplateDefaultControlValues,
@@ -24,6 +25,7 @@ const formatCategoryLabel = (category: string): string =>
   category.replace(/-/g, " ");
 
 export const RecipesTab: React.FC = () => {
+  const { language } = useI18n();
   const project = useProjectStore((state) => state.project);
   const getClip = useProjectStore((state) => state.getClip);
   const getMediaItem = useProjectStore((state) => state.getMediaItem);
@@ -157,8 +159,8 @@ export const RecipesTab: React.FC = () => {
   const handleApply = async (template: EditingTemplate): Promise<void> => {
     if (!selectedClip || !selectedTargetType) {
       toast.warning(
-        "Select a clip",
-        "Recipes apply to one selected video or image clip.",
+        language === "es" ? "Selecciona un clip" : "Select a clip",
+        language === "es" ? "Las recetas se aplican a un solo clip de video o imagen seleccionado." : "Recipes apply to one selected video or image clip.",
       );
       return;
     }
@@ -174,15 +176,15 @@ export const RecipesTab: React.FC = () => {
 
       if (!applicationId) {
         toast.error(
-          "Could not apply recipe",
-          "This recipe could not be applied to the current clip.",
+          language === "es" ? "No se pudo aplicar la receta" : "Could not apply recipe",
+          language === "es" ? "Esta receta no se pudo aplicar al clip actual." : "This recipe could not be applied to the current clip.",
         );
         return;
       }
 
       toast.success(
-        "Recipe applied",
-        `${template.name} was added to ${selectedMedia?.name || "the selected clip"}.`,
+        language === "es" ? "Receta aplicada" : "Recipe applied",
+        language === "es" ? `${template.name} se añadió a ${selectedMedia?.name || "el clip seleccionado"}.` : `${template.name} was added to ${selectedMedia?.name || "the selected clip"}.`,
       );
     } finally {
       setApplyingTemplateId(null);
@@ -230,7 +232,7 @@ export const RecipesTab: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search recipes..."
+            placeholder="{language === "es" ? "Buscar recetas" : "Search recipes"}..."
             className="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background-tertiary text-xs text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 transition-colors"
           />
         </div>
