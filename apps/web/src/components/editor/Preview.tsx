@@ -981,6 +981,17 @@ export const Preview: React.FC = () => {
     return maxEnd;
   }, [project.timeline.tracks, allTextClips, allShapeClips]);
 
+  const domPlayheadRef = useRef(playheadPosition);
+  const domPlayingRef = useRef(isPlaying);
+
+  useEffect(() => {
+    domPlayheadRef.current = playheadPosition;
+  }, [playheadPosition]);
+
+  useEffect(() => {
+    domPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   const domPreviewItems = useMemo(() => {
     if (!simpleDomPreviewEligible) return [];
 
@@ -1189,7 +1200,7 @@ export const Preview: React.FC = () => {
     if (!simpleDomPreviewEligible || !isPlaying) return;
 
     let rafId = 0;
-    let originTime = playheadPositionRef.current;
+    let originTime = domPlayheadRef.current;
     let originNow = performance.now();
 
     const tick = () => {
@@ -1200,7 +1211,7 @@ export const Preview: React.FC = () => {
 
       // Respect an external seek while playing instead of snapping back to the
       // previous wall-clock origin.
-      const observed = playheadPositionRef.current;
+      const observed = domPlayheadRef.current;
       if (Math.abs(observed - next) > 0.45) {
         originTime = observed;
         originNow = now;
@@ -1209,7 +1220,6 @@ export const Preview: React.FC = () => {
 
       if (next >= actualEndTime) {
         setPlayheadPosition(0);
-        startPositionRef.current = 0;
         pause();
         return;
       }
@@ -2610,18 +2620,18 @@ export const Preview: React.FC = () => {
 
   const isPlayingRef = useRef(isPlaying);
   useEffect(() => {
-    isPlayingRef.current = isPlaying;
+    domPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
   const playheadPositionRef = useRef(playheadPosition);
   useEffect(() => {
-    playheadPositionRef.current = playheadPosition;
+    domPlayheadRef.current = playheadPosition;
   }, [playheadPosition]);
 
   useEffect(() => {
     setImageLoadCallback(() => {
-      if (!isPlayingRef.current) {
-        renderFrameDirectlyRef.current(playheadPositionRef.current);
+      if (!domPlayingRef.current) {
+        renderFrameDirectlyRef.current(domPlayheadRef.current);
       }
     });
     return () => setImageLoadCallback(null);
@@ -6593,7 +6603,7 @@ export const Preview: React.FC = () => {
                       const video = event.currentTarget;
                       const wanted =
                         (item.clip.inPoint || 0) +
-                        Math.max(0, playheadPositionRef.current - item.clip.startTime);
+                        Math.max(0, domPlayheadRef.current - item.clip.startTime);
                       if (Number.isFinite(wanted)) {
                         try {
                           video.currentTime = wanted;
@@ -6601,7 +6611,7 @@ export const Preview: React.FC = () => {
                           // Browser will retry through the sync effect.
                         }
                       }
-                      if (isPlayingRef.current) {
+                      if (domPlayingRef.current) {
                         void video.play().catch(() => undefined);
                       }
                     }}
