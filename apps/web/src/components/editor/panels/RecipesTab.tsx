@@ -198,9 +198,9 @@ export const RecipesTab: React.FC = () => {
           <Sparkles size={24} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-text-primary">Select a clip first</p>
+          <p className="text-sm font-semibold text-text-primary">{language === "es" ? "Selecciona un clip primero" : "Select a clip first"}</p>
           <p className="mt-1.5 text-xs text-text-muted max-w-[240px] leading-relaxed mx-auto">
-            Choose a video or image in the timeline to apply clip-scoped recipes, looks, and caption treatments.
+            {language === "es" ? "Elige un video o una imagen en la línea de tiempo para aplicar recetas, estilos y tratamientos de texto." : "Choose a video or image in the timeline to apply clip-scoped recipes, looks, and caption treatments."}
           </p>
         </div>
       </div>
@@ -217,10 +217,10 @@ export const RecipesTab: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-text-primary truncate" title={selectedMedia?.name || selectedClip.id}>
-              {selectedMedia?.name || 'Selected Clip'}
+              {selectedMedia?.name || (language === "es" ? "Clip seleccionado" : "Selected Clip")}
             </p>
             <p className="text-[10px] text-text-muted mt-0.5">
-              {selectedClip.duration.toFixed(1)}s • {appliedTemplates.length} recipes applied
+              {selectedClip.duration.toFixed(1)}s • {appliedTemplates.length} {language === "es" ? "recetas aplicadas" : "recipes applied"}
             </p>
           </div>
         </div>
@@ -232,7 +232,7 @@ export const RecipesTab: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="{language === "es" ? "Buscar recetas" : "Search recipes"}..."
+            placeholder={language === "es" ? "Buscar recetas..." : "Search recipes..."}
             className="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background-tertiary text-xs text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 transition-colors"
           />
         </div>
@@ -269,8 +269,8 @@ export const RecipesTab: React.FC = () => {
       <div className="flex-1 p-4 space-y-3">
         {filteredTemplates.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-text-secondary text-sm font-medium">No recipes match</p>
-            <p className="mt-2 text-xs text-text-muted">Try a different search or category.</p>
+            <p className="text-text-secondary text-sm font-medium">{language === "es" ? "No hay recetas coincidentes" : "No recipes match"}</p>
+            <p className="mt-2 text-xs text-text-muted">{language === "es" ? "Prueba otra búsqueda o categoría." : "Try a different search or category."}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
