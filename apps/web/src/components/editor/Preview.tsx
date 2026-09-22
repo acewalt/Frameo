@@ -4904,7 +4904,7 @@ export const Preview: React.FC = () => {
 
   const beginRotation = useCallback(
     (
-      e: React.MouseEvent,
+      e: React.PointerEvent,
       target: "clip" | "text-clip" | "shape-clip",
       id: string,
       rotation: number,
@@ -4912,6 +4912,7 @@ export const Preview: React.FC = () => {
     ) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
       const overlayRect = overlayRef.current?.getBoundingClientRect();
       if (!overlayRect) return;
 
@@ -4938,9 +4939,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleHandleMouseDown = useCallback(
-    (e: React.MouseEvent, handle: HandlePosition) => {
+    (e: React.PointerEvent, handle: HandlePosition) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       const clip = selectedClip || clipAtPlayhead;
       if (!clip) return;
@@ -4971,9 +4973,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleClipMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       const clip = selectedClip || clipAtPlayhead;
       if (!clip) return;
@@ -5003,9 +5006,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleTextClipMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       if (!activeTextClip) return;
 
@@ -5030,9 +5034,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleTextHandleMouseDown = useCallback(
-    (e: React.MouseEvent, handle: HandlePosition) => {
+    (e: React.PointerEvent, handle: HandlePosition) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       if (!activeTextClip) return;
 
@@ -5058,9 +5063,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleShapeClipMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       if (!activeShapeClip) return;
 
@@ -5085,9 +5091,10 @@ export const Preview: React.FC = () => {
   );
 
   const handleShapeHandleMouseDown = useCallback(
-    (e: React.MouseEvent, handle: HandlePosition) => {
+    (e: React.PointerEvent, handle: HandlePosition) => {
       e.stopPropagation();
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
 
       if (!activeShapeClip) return;
 
@@ -5155,7 +5162,7 @@ export const Preview: React.FC = () => {
   }, [renderFrameDirectly, playheadPosition]);
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.PointerEvent) => {
       if (interactionMode === "none") return;
 
       if (interactionMode === "rotate" && rotationStartRef.current) {
@@ -5631,8 +5638,12 @@ export const Preview: React.FC = () => {
         }
       };
 
-      window.addEventListener("mouseup", handleGlobalMouseUp);
-      return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
+      window.addEventListener("pointerup", handleGlobalMouseUp);
+      window.addEventListener("pointercancel", handleGlobalMouseUp);
+      return () => {
+        window.removeEventListener("pointerup", handleGlobalMouseUp);
+        window.removeEventListener("pointercancel", handleGlobalMouseUp);
+      };
     }
   }, [
     interactionMode,
@@ -5779,11 +5790,12 @@ export const Preview: React.FC = () => {
       {/* Video Area */}
       <div
         ref={videoAreaRef}
-        className={`flex-1 min-h-0 min-w-0 relative flex items-center justify-center bg-background-secondary/30 transition-all duration-300 ${
+        className={`flex-1 min-h-0 min-w-0 relative flex items-center justify-center bg-background-secondary/30 transition-all duration-300 touch-none ${
           isMaximized || isFullscreen ? "p-0" : "p-2 sm:p-4"
         } ${zoomLevel > 1 ? "overflow-auto" : ""}`}
-        onMouseMove={interactionMode !== "none" ? handleMouseMove : undefined}
-        onMouseUp={handleMouseUp}
+        onPointerMove={interactionMode !== "none" ? handleMouseMove : undefined}
+        onPointerUp={handleMouseUp}
+        onPointerCancel={handleMouseUp}
       >
         <div
           ref={overlayRef}
@@ -5913,14 +5925,14 @@ export const Preview: React.FC = () => {
               {/* Frameo direct manipulation surface: drag anywhere inside the selected clip */}
               <div
                 className="absolute inset-0 pointer-events-auto cursor-move"
-                onMouseDown={handleClipMouseDown}
+                onPointerDown={handleClipMouseDown}
                 title="Drag anywhere to move"
               />
 
               {/* Move handle (center) */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-primary/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-primary transition-colors"
-                onMouseDown={handleClipMouseDown}
+                onPointerDown={handleClipMouseDown}
                 title="Drag to move"
               >
                 <Move size={14} className="text-white" />
@@ -5929,7 +5941,7 @@ export const Preview: React.FC = () => {
               {/* Rotation handle */}
               <button
                 className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-primary text-primary flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-primary hover:text-white transition-colors"
-                onMouseDown={(e) =>
+                onPointerDown={(e) =>
                   beginRotation(
                     e,
                     "clip",
@@ -5961,37 +5973,37 @@ export const Preview: React.FC = () => {
               {/* Corner resize handles */}
               <div
                 className="absolute -left-2 -top-2 w-4 h-4 bg-white border-2 border-primary rounded-sm cursor-nw-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "nw")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "nw")}
               />
               <div
                 className="absolute -right-2 -top-2 w-4 h-4 bg-white border-2 border-primary rounded-sm cursor-ne-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "ne")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "ne")}
               />
               <div
                 className="absolute -left-2 -bottom-2 w-4 h-4 bg-white border-2 border-primary rounded-sm cursor-sw-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "sw")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "sw")}
               />
               <div
                 className="absolute -right-2 -bottom-2 w-4 h-4 bg-white border-2 border-primary rounded-sm cursor-se-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "se")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "se")}
               />
 
               {/* Edge resize handles */}
               <div
                 className="absolute left-1/2 -translate-x-1/2 -top-2 w-6 h-4 bg-white border-2 border-primary rounded-sm cursor-n-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "n")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "n")}
               />
               <div
                 className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-6 h-4 bg-white border-2 border-primary rounded-sm cursor-s-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "s")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "s")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -left-2 w-4 h-6 bg-white border-2 border-primary rounded-sm cursor-w-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "w")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "w")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -right-2 w-4 h-6 bg-white border-2 border-primary rounded-sm cursor-e-resize pointer-events-auto hover:bg-primary hover:border-white transition-colors"
-                onMouseDown={(e) => handleHandleMouseDown(e, "e")}
+                onPointerDown={(e) => handleHandleMouseDown(e, "e")}
               />
             </div>
           )}
@@ -6011,14 +6023,14 @@ export const Preview: React.FC = () => {
               <div className="absolute inset-0 border-2 border-cyan-500 pointer-events-none" />
               <div
                 className="absolute inset-0 pointer-events-auto cursor-move"
-                onMouseDown={handleTextClipMouseDown}
+                onPointerDown={handleTextClipMouseDown}
                 title="Drag anywhere to move text"
               />
 
               {/* Move handle (center) */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-cyan-500/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-cyan-500 transition-colors"
-                onMouseDown={handleTextClipMouseDown}
+                onPointerDown={handleTextClipMouseDown}
                 title="Drag to move text"
               >
                 <Move size={14} className="text-white" />
@@ -6027,7 +6039,7 @@ export const Preview: React.FC = () => {
               {/* Rotation handle */}
               <button
                 className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-cyan-500 text-cyan-400 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-500 hover:text-white transition-colors"
-                onMouseDown={(e) =>
+                onPointerDown={(e) =>
                   beginRotation(
                     e,
                     "text-clip",
@@ -6059,37 +6071,37 @@ export const Preview: React.FC = () => {
               {/* Corner resize handles */}
               <div
                 className="absolute -left-2 -top-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "nw")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "nw")}
               />
               <div
                 className="absolute -right-2 -top-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "ne")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "ne")}
               />
               <div
                 className="absolute -left-2 -bottom-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "sw")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "sw")}
               />
               <div
                 className="absolute -right-2 -bottom-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "se")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "se")}
               />
 
               {/* Edge resize handles */}
               <div
                 className="absolute left-1/2 -translate-x-1/2 -top-2 w-6 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "n")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "n")}
               />
               <div
                 className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-6 h-4 bg-white border-2 border-cyan-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "s")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "s")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -left-2 w-4 h-6 bg-white border-2 border-cyan-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "w")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "w")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -right-2 w-4 h-6 bg-white border-2 border-cyan-500 rounded-sm cursor-e-resize pointer-events-auto hover:bg-cyan-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleTextHandleMouseDown(e, "e")}
+                onPointerDown={(e) => handleTextHandleMouseDown(e, "e")}
               />
             </div>
           )}
@@ -6110,14 +6122,14 @@ export const Preview: React.FC = () => {
               )}
               <div
                 className="absolute inset-0 pointer-events-auto cursor-move"
-                onMouseDown={handleShapeClipMouseDown}
+                onPointerDown={handleShapeClipMouseDown}
                 title="Drag anywhere to move shape"
               />
 
               {/* Move handle (center) */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-green-500/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-green-500 transition-colors"
-                onMouseDown={handleShapeClipMouseDown}
+                onPointerDown={handleShapeClipMouseDown}
                 title="Drag to move shape"
               >
                 <Move size={14} className="text-white" />
@@ -6126,7 +6138,7 @@ export const Preview: React.FC = () => {
               {/* Rotation handle */}
               <button
                 className="absolute -top-10 right-0 w-7 h-7 rounded-full bg-background-tertiary border border-green-500 text-green-400 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-green-500 hover:text-white transition-colors"
-                onMouseDown={(e) =>
+                onPointerDown={(e) =>
                   beginRotation(
                     e,
                     "shape-clip",
@@ -6158,37 +6170,37 @@ export const Preview: React.FC = () => {
               {/* Corner resize handles */}
               <div
                 className="absolute -left-2 -top-2 w-4 h-4 bg-white border-2 border-green-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "nw")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "nw")}
               />
               <div
                 className="absolute -right-2 -top-2 w-4 h-4 bg-white border-2 border-green-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "ne")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "ne")}
               />
               <div
                 className="absolute -left-2 -bottom-2 w-4 h-4 bg-white border-2 border-green-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "sw")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "sw")}
               />
               <div
                 className="absolute -right-2 -bottom-2 w-4 h-4 bg-white border-2 border-green-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "se")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "se")}
               />
 
               {/* Edge resize handles */}
               <div
                 className="absolute left-1/2 -translate-x-1/2 -top-2 w-6 h-4 bg-white border-2 border-green-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "n")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "n")}
               />
               <div
                 className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-6 h-4 bg-white border-2 border-green-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "s")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "s")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -left-2 w-4 h-6 bg-white border-2 border-green-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "w")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "w")}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -right-2 w-4 h-6 bg-white border-2 border-green-500 rounded-sm cursor-e-resize pointer-events-auto hover:bg-green-500 hover:border-white transition-colors"
-                onMouseDown={(e) => handleShapeHandleMouseDown(e, "e")}
+                onPointerDown={(e) => handleShapeHandleMouseDown(e, "e")}
               />
             </div>
           )}
