@@ -1,6 +1,5 @@
 import React, { useCallback, useState, useEffect } from "react";
 import {
-  Search,
   Command,
   ChevronDown,
   FileVideo,
@@ -12,13 +11,10 @@ import {
   Loader2,
   X,
   Check,
-  FileCode,
   Settings,
   Zap,
   Circle,
-  History,
   HelpCircle,
-  Diamond,
   Sparkles,
   Play,
   Languages,
@@ -82,15 +78,7 @@ interface ExportState {
 export const Toolbar: React.FC = () => {
   const { language, setLanguage, t } = useI18n();
   const { project } = useProjectStore();
-  const {
-    openModal,
-    selectedItems,
-    setExportState: setGlobalExportState,
-    keyframeEditorOpen,
-    toggleKeyframeEditor,
-    panels,
-    togglePanel,
-  } = useUIStore();
+  const { setExportState: setGlobalExportState } = useUIStore();
   const { mode: themeMode, toggleTheme } = useThemeStore();
   const { navigate } = useRouter();
   const { openSettings } = useSettingsStore();
@@ -111,12 +99,6 @@ export const Toolbar: React.FC = () => {
     startMoGraphTour();
   }, []);
 
-  const hasSelectedClip = selectedItems.some(
-    (item) =>
-      item.type === "clip" ||
-      item.type === "text-clip" ||
-      item.type === "shape-clip",
-  );
   const [exportState, setExportState] = useState<ExportState>({
     isExporting: false,
     progress: 0,
@@ -172,10 +154,6 @@ export const Toolbar: React.FC = () => {
 
     setExportEstimates(estimates);
   }, [deviceProfile, project.timeline?.duration, project.settings.width, project.settings.height]);
-
-  const handleSearch = useCallback(() => {
-    openModal("search");
-  }, [openModal]);
 
   const runExport = useCallback(
     async (videoSettings: Partial<VideoExportSettings>, _ext: string, writableStream: FileSystemWritableFileStream) => {
