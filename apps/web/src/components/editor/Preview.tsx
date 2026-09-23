@@ -1242,13 +1242,6 @@ export const Preview: React.FC = () => {
         .filter((item) => item.isActive)
         .map((item) => item.clip.id),
     );
-    const anySolo = timelineTracks.some(
-      (track) =>
-        track.type === "video" &&
-        !track.hidden &&
-        track.solo,
-    );
-
     for (const [clipId, video] of domVideoRefs.current.entries()) {
       if (!activeIds.has(clipId)) {
         video.muted = true;
@@ -1267,11 +1260,9 @@ export const Preview: React.FC = () => {
       const tolerance = isPlaying ? 0.45 : 0.025;
 
       video.playbackRate = playbackRate;
-      video.muted =
-        isMuted ||
-        item.track.muted ||
-        (anySolo && !item.track.solo);
-      video.volume = Math.max(0, Math.min(1, item.clip.volume ?? 1));
+      // Visual-only element. RealtimeAudioGraph is the single audio owner.
+      video.muted = true;
+      video.volume = 0;
 
       if (
         video.readyState >= HTMLMediaElement.HAVE_METADATA &&
@@ -1307,24 +1298,12 @@ export const Preview: React.FC = () => {
     if (!simpleDomPreviewEligible || !isPlaying) return;
 
     let rafId = 0;
-    let originTime = domPlayheadRef.current;
-    let originNow = performance.now();
     let lastUiUpdate = 0;
+    const masterClock = getMasterClock();
 
     const tick = () => {
       const now = performance.now();
-      let next =
-        originTime +
-        ((now - originNow) / 1000) * playbackRate;
-
-      // Respect an external seek while playing instead of snapping back to the
-      // previous wall-clock origin.
-      const observed = domPlayheadRef.current;
-      if (Math.abs(observed - next) > 0.45) {
-        originTime = observed;
-        originNow = now;
-        next = observed;
-      }
+      const next = masterClock.currentTime;
 
       if (next >= actualEndTime) {
         setPlayheadPosition(0);
@@ -1348,7 +1327,6 @@ export const Preview: React.FC = () => {
   }, [
     simpleDomPreviewEligible,
     isPlaying,
-    playbackRate,
     actualEndTime,
     pause,
     setPlayheadPosition,
@@ -3674,7 +3652,6 @@ export const Preview: React.FC = () => {
   useEffect(() => {
     if (simpleDomPreviewEligible) {
       cleanupPlaybackResources();
-      cleanupAudioResources();
       return;
     }
 
@@ -6765,7 +6742,7 @@ export const Preview: React.FC = () => {
                       }
                     }}
                     src={item.src}
-                    muted={false}
+                    muted
                     playsInline
                     preload="auto"
                     draggable={false}
