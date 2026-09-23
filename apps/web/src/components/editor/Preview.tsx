@@ -1044,6 +1044,14 @@ export const Preview: React.FC = () => {
     return maxEnd;
   }, [project.timeline.tracks, allTextClips, allShapeClips]);
 
+  const domDurationRef = useRef(actualEndTime);
+  useEffect(() => {
+    domDurationRef.current = actualEndTime;
+    if (simpleDomPreviewEligible) {
+      getMasterClock().setDuration(actualEndTime);
+    }
+  }, [actualEndTime, simpleDomPreviewEligible]);
+
   const domPlayheadRef = useRef(playheadPosition);
   const domPlayingRef = useRef(isPlaying);
 
@@ -2070,7 +2078,7 @@ export const Preview: React.FC = () => {
         });
       }
 
-      masterClock.setDuration(actualEndTime);
+      masterClock.setDuration(domDurationRef.current);
       masterClock.setPlaybackRate(playbackRate);
       masterClock.seek(domPlayheadRef.current);
 
@@ -2108,7 +2116,6 @@ export const Preview: React.FC = () => {
     isPlaying,
     playbackRate,
     isMuted,
-    actualEndTime,
     domAudioLayoutSignature,
     preDecodeAllAudioBuffers,
     getAudioClipsForScheduler,
