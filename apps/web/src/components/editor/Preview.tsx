@@ -1911,7 +1911,7 @@ export const Preview: React.FC = () => {
     const tracks = timelineTracksRef.current;
     const audioTracks = tracks.filter((t) => t.type === "audio" && !t.hidden);
     const videoTracks = tracks.filter(
-      (t) => (t.type === "video" || t.type === "image") && !t.hidden,
+      (t) => t.type === "video" && !t.hidden,
     );
 
     if (!audioGraphRef.current) {
@@ -2057,6 +2057,29 @@ export const Preview: React.FC = () => {
     };
 
     const syncDomAudio = async () => {
+      // Hard handoff: the DOM preview may never coexist with a legacy/native
+      // audio source. Kill every previous owner before starting the mixer.
+      nativePlaybackActiveRef.current = false;
+
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.stop();
+        } catch {
+          // Already stopped.
+        }
+        try {
+          audioSourceRef.current.disconnect();
+        } catch {
+          // Already disconnected.
+        }
+        audioSourceRef.current = null;
+      }
+
+      if (videoElementRef.current) {
+        videoElementRef.current.muted = true;
+        videoElementRef.current.pause();
+      }
+
       audioGraph.stopScheduler();
       audioGraph.stopAllClips();
       audioGraph.setPreviewMuted(isMuted);
