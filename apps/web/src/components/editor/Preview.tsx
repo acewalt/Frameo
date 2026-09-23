@@ -889,15 +889,6 @@ export const Preview: React.FC = () => {
       return false;
     }
 
-    // Dedicated audio tracks/effects still use the advanced playback engine.
-    if (
-      timelineTracks.some(
-        (track) => track.type === "audio" && track.clips.length > 0 && !track.hidden,
-      )
-    ) {
-      return false;
-    }
-
     for (const track of timelineTracks) {
       if (track.hidden) continue;
 
@@ -930,6 +921,34 @@ export const Preview: React.FC = () => {
     timelineTracks,
     allSubtitles,
   ]);
+
+  const domAudioLayoutSignature = useMemo(
+    () =>
+      JSON.stringify(
+        timelineTracks
+          .filter(
+            (track) =>
+              (track.type === "video" || track.type === "audio") &&
+              !track.hidden,
+          )
+          .map((track) => ({
+            id: track.id,
+            muted: track.muted,
+            solo: track.solo,
+            clips: track.clips.map((clip) => ({
+              id: clip.id,
+              mediaId: clip.mediaId,
+              startTime: clip.startTime,
+              duration: clip.duration,
+              inPoint: clip.inPoint,
+              volume: clip.volume,
+              speed: clip.speed,
+              audioTrackIndex: clip.audioTrackIndex,
+            })),
+          })),
+      ),
+    [timelineTracks],
+  );
 
   const previewFrameSize = useMemo(() => {
     if (videoAreaSize.width <= 0 || videoAreaSize.height <= 0) {
