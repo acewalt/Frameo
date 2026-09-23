@@ -2029,6 +2029,91 @@ export const Preview: React.FC = () => {
     ],
   );
 
+  useEffect(() => {
+    if (!simpleDomPreviewEligible) return;
+
+    let cancelled = false;
+    const masterClock = getMasterClock();
+
+    if (!audioGraphRef.current) {
+      audioGraphRef.current = getRealtimeAudioGraph();
+    }
+    const audioGraph = audioGraphRef.current;
+
+    const stopDomAudio = () => {
+      audioGraph.stopScheduler();
+      audioGraph.stopAllClips();
+      if (masterClock.isPlaying) {
+        masterClock.pause();
+      }
+    };
+
+    const syncDomAudio = async () => {
+      audioGraph.stopScheduler();
+      audioGraph.stopAllClips();
+      audioGraph.setPreviewMuted(isMuted);
+
+      const tracksWithAudio = timelineTracksRef.current.filter(
+        (track) =>
+          (track.type === "video" || track.type === "audio") &&
+          !track.hidden,
+      );
+
+      for (const track of tracksWithAudio) {
+        audioGraph.createTrack({
+          trackId: track.id,
+          volume: 1,
+          pan: 0,
+          muted: track.muted || false,
+          solo: track.solo || false,
+          effects: [],
+        });
+      }
+
+      masterClock.setDuration(actualEndTime);
+      masterClock.setPlaybackRate(playbackRate);
+      masterClock.seek(domPlayheadRef.current);
+
+      if (!isPlaying) {
+        stopDomAudio();
+        masterClock.seek(domPlayheadRef.current);
+        return;
+      }
+
+      await preDecodeAllAudioBuffers();
+      if (cancelled || !domPlayingRef.current) return;
+
+      await audioGraph.resume();
+      if (cancelled || !domPlayingRef.current) return;
+
+      masterClock.seek(domPlayheadRef.current);
+      await masterClock.play();
+      if (cancelled || !domPlayingRef.current) {
+        stopDomAudio();
+        return;
+      }
+
+      audioGraph.seekTo(masterClock.currentTime);
+      audioGraph.startScheduler(getAudioClipsForScheduler);
+    };
+
+    void syncDomAudio();
+
+    return () => {
+      cancelled = true;
+      stopDomAudio();
+    };
+  }, [
+    simpleDomPreviewEligible,
+    isPlaying,
+    playbackRate,
+    isMuted,
+    actualEndTime,
+    domAudioLayoutSignature,
+    preDecodeAllAudioBuffers,
+    getAudioClipsForScheduler,
+  ]);
+
   /**
    * Decode a single frame from a clip at a specific time using native video element
    * Native video elements provide reliable hardware-accelerated random-access seeking
